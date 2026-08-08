@@ -34,9 +34,8 @@ export default async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Match all pathnames except for
-  // - /api, /trpc (API routes)
-  // - /_next (Next.js internals)
-  // - files with an extension (e.g. favicon.ico, logo.png)
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  matcher: [
+    // api, _next, static files, sitemap.xml සහ robots.txt middleware එකෙන් bypass කිරීම
+    '/((?!api|_next|_vercel|.*\\..*|sitemap\\.xml|robots\\.txt).*)',
+  ],
 };
