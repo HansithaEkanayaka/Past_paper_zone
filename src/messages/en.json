@@ -1,0 +1,261 @@
+{
+  "nav": {
+    "home": "Home",
+    "subject": "Subject",
+    "studyTips": "Study Tips",
+    "pomodoro": "Pomodoro Timer",
+    "about": "About",
+    "feedback": "Feedback",
+    "login": "Login",
+    "menu": "Menu",
+    "openMenu": "Open mobile navigation menu",
+    "closeMenu": "Close mobile navigation menu",
+    "searchLabel": "Search site content",
+    "searchPlaceholder": "Search past papers..."
+  },
+  "hero": {
+    "titlePrefix": "PastPaper",
+    "titleSuffix": "Zone",
+    "description": "Download free Ordinary Level (O/L) & Advanced Level (A/L) Past Papers and marking schemes - built exclusively for Sri Lankan Ordinary Level (O/L) & Advanced Level (A/L) students. 100% free, always.",
+    "explorePapers": "Explore Papers",
+    "aboutUs": "About Us",
+    "pastPapers": "past papers",
+    "subjects": "subjects",
+    "mediums": "mediums"
+  },
+  "about": {
+    "badge": "About Us",
+    "heading": "About PastPaperZone",
+    "missionTitle": "Our Mission",
+    "missionP1": "PastPaperZone was founded by a student who struggled to find quality, free study resources in one place. I believe every student in Sri Lanka deserves access to excellent educational material regardless of their financial situation.",
+    "missionP2": "All our papers and schemes are categorized and updated regularly to align with the Department of Examinations syllabus. We are not affiliated with any school or tuition class.",
+    "offerTitle": "What We Offer",
+    "offerItems": [
+      "Past papers and marking schemes for O/L and A/L subjects",
+      "Trilingual support (Sinhala, English, and Tamil medium)",
+      "Evidence-based study techniques and tips",
+      "A free, no-subscription, no-login experience",
+      "Mobile-friendly access for students on any device",
+      "Direct PDF downloads without registration"
+    ],
+    "policyTitle": "Content Policy",
+    "policyBefore": "All content hosted on PastPaperZone is either original content created by our contributors or public domain materials. We do not host copyrighted third-party textbooks. If you believe any content infringes your rights, please",
+    "policyLink": "contact us",
+    "policyAfter": "immediately and we will act promptly.",
+    "freeTitle": "How We Stay Free",
+    "freeText": "This site is supported entirely by Google AdSense advertising revenue. Ads allow us to cover hosting costs and keep all resources permanently free for students. We are committed to maintaining a respectful, non-intrusive ad experience and will never show misleading, deceptive, or inappropriate advertisements."
+  },
+  "footer": {
+    "desc1": "Free study notes, past papers, and marking schemes for G.C.E. O/L and A/L students in Sri Lanka.",
+    "desc2": "Supported by Google AdSense. No subscriptions. No logins. Just learning.",
+    "resourcesHeading": "RESOURCES",
+    "siteHeading": "SITE",
+    "resources": {
+      "ol": "Ordinary Level (O/L)",
+      "al": "Advanced Level (A/L)"
+    },
+    "site": {
+      "about": "About Us",
+      "contact": "Contact Us",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Use",
+      "disclaimer": "Disclaimer",
+      "cookies": "Cookie Settings"
+    },
+    "copyright": "© {year} PastPaperZone. All rights reserved.",
+    "tagline": "Designed & Built for Sri Lankan Students"
+  },
+  "feedback": {
+    "badge": "Student Voice",
+    "heading": "Send Your Feedback",
+    "subheading": "Your feedback helps us add new features and improve study materials for Sri Lankan students.",
+    "successTitle": "Thank You!",
+    "successText": "Your feedback has been received. We appreciate your support in improving PastPaperZone!",
+    "submitAnother": "Submit another response",
+    "ratingLabel": "Rating",
+    "nameLabel": "Your Name",
+    "namePlaceholder": "e.g. Nimal Perera",
+    "emailLabel": "Email Address (Optional)",
+    "emailPlaceholder": "e.g. nimal@gmail.com",
+    "commentLabel": "Your Comment",
+    "commentPlaceholder": "Share your experience or suggestion...",
+    "submitButton": "Submit Feedback"
+  },
+  "SubjectCard": {
+    "badge": "Subject",
+    "selectLevelHeading": "Select Education Level",
+    "olTab": "O/L Subjects",
+    "alTab": "A/L Subjects",
+    "olHeading": "G.C.E Ordinary Level (O/L) Subjects",
+    "alHeading": "G.C.E Advanced Level (A/L) Subjects",
+    "codeLabel": "Code: {code}",
+    "olTag": "G.C.E O/L",
+    "alTag": "G.C.E A/L",
+    "mediumAvailable": "{count} Medium Available",
+    "viewLink": "View →",
+    "subjects": {
+      "ol-maths": "Mathematics",
+      "ol-science": "Science",
+      "ol-sinhala": "Sinhala Language",
+      "ol-english": "English Language",
+      "ol-history": "History",
+      "ol-buddhism": "Buddhism",
+      "ol-tamil": "Tamil Language",
+      "ol-geography": "Geography",
+      "ol-civic": "Civic Education",
+      "ol-music": "Music(Oriental)",
+      "ol-art": "Art",
+      "ol-dancing": "Dancing",
+      "ol-drama": "Drama",
+      "ol-ict": "Information & Comm. Tech",
+      "ol-agriculture": "Agriculture",
+      "ol-health": "Health",
+      "al-combined-maths": "Combined Mathematics",
+      "al-physics": "Physics",
+      "al-chemistry": "Chemistry",
+      "al-biology": "Biology",
+      "al-ict": "Information Tech (ICT)",
+      "al-accounting": "Accounting",
+      "al-business": "Business Studies",
+      "al-econ": "Economics",
+      "al-agro": "Agro Technology",
+      "al-et": "Engineering Technology",
+      "al-bst": "Bio Systems Technology",
+      "al-sft": "Science for Technology"
+    }
+  },
+  "studyTips": {
+    "badge": "Study Tips",
+    "heading": "Top Study Tips",
+    "tips": {
+      "01": {
+        "title": "Pomodoro Technique",
+        "description": "Study for 25 minutes, then rest for 5. After four rounds take a long break. Keeps your mind sharp and prevents burnout."
+      },
+      "02": {
+        "title": "Active Recall",
+        "description": "After reading a unit, close your notes and write down everything you remember. Retrieval practice is far more effective than re-reading."
+      },
+      "03": {
+        "title": "Past Papers First",
+        "description": "Attempt past papers early to understand the exam format. Identify your weak areas and redirect your study time there."
+      },
+      "04": {
+        "title": "Mind Maps",
+        "description": "Draw visual maps connecting key concepts. Especially effective for Engineering Technology and Science units with many interconnected ideas."
+      },
+      "05": {
+        "title": "Teach Someone",
+        "description": "Explain a concept aloud to a friend or even to yourself. The Feynman Technique reveals gaps in your understanding instantly."
+      },
+      "06": {
+        "title": "Sleep & Review",
+        "description": "Review your notes just before sleep. Your brain consolidates memories during sleep — take advantage of this biological superpower."
+      }
+    }
+  },
+  "pomodoro": {
+    "badge": "Focus Timer",
+    "heading": "Pomodoro Timer",
+    "description": "Stay focused with structured study and break sessions.",
+    "work": "Work",
+    "shortBreak": "Short Break",
+    "longBreak": "Long Break",
+    "start": "Start",
+    "pause": "Pause",
+    "reset": "Reset",
+    "sessionsCompleted": "Sessions completed",
+    "soundOnLabel": "Mute alert sound",
+    "soundOffLabel": "Unmute alert sound",
+    "timeUpWork": "Work session complete! Time for a break.",
+    "timeUpShortBreak": "Short break over! Back to work.",
+    "timeUpLongBreak": "Long break over! Ready for another round?"
+  },
+  "subjectDetail": {
+    "backToAll": "Back to All Subjects",
+    "levelTagAl": "G.C.E. ADVANCED LEVEL (A/L)",
+    "levelTagOl": "G.C.E. ORDINARY LEVEL (O/L)",
+    "step1": "Step 1: Select examination year to view past papers.",
+    "step2": "Step 2: Choose preferred medium for {year} examination papers.",
+    "selectYearHeading": "Select Examination Year",
+    "selectMediumHeading": "Select Medium for {year}",
+    "tagSinhala": "Sinhala Medium",
+    "tagEnglish": "English Medium",
+    "tagTamil": "Tamil Medium",
+    "questionPaperTab": "Question Paper",
+    "markingSchemeTab": "Marking Scheme",
+    "showingFor": "Showing {docType} for",
+    "downloadDesc": "Download official {docType} for {subject} ({year} - {medium}).",
+    "docTypePapers": "question papers",
+    "docTypeSchemes": "marking schemes",
+    "downloadButton": "Download {docType}",
+    "promptText": "Please select an examination year above to unlock past papers and marking schemes.",
+    "fallbackSubject": "Subject",
+    "previewButton": "Preview",
+    "hidePreviewButton": "Hide Preview",
+    "previewUnavailable": "Preview couldn't be loaded. Try the download button instead.",
+    "previewNote": "If the preview looks empty, this paper may not be uploaded yet — try Download to check, or use Request a Missing Subject."
+  },
+  "missingRequest": {
+    "bannerTitle": "Is there any Subject or Paper missing?",
+    "bannerDesc": "If there is any Past Paper or Marking Scheme missing on our website, please let us know. We will upload it as soon as possible.",
+    "buttonText": "Request Missing Paper / Subject →",
+    "modalBadge": "Paper Request Form",
+    "modalTitle": "Request or Report Missing Content",
+    "modalSubtitle": "Send us the details of the subject or paper you need using the form below.",
+    "successMsg": "Your request has been submitted successfully! We will add it soon.",
+    "errorMsg": "Something went wrong. Please try again.",
+    "serverErrorMsg": "Server error! Please try again later.",
+    "labelName": "Your Name",
+    "labelEmail": "Email Address",
+    "labelSubject": "Subject Name",
+    "labelTopic": "Main Issue / Request Topic",
+    "labelMessage": "Message / Details",
+    "phName": "e.g. Kasun Kalhara",
+    "phEmail": "kasun@gmail.com",
+    "phSubject": "e.g. O/L Combined Maths, A/L Chemistry",
+    "phMessage": "Specify the year, medium, or any other details...",
+    "topicOption1": "Missing Past Paper",
+    "topicOption2": "Missing Marking Scheme",
+    "topicOption3": "Entire Subject Missing",
+    "topicOption4": "Wrong File Attached",
+    "topicOption5": "Other Issue",
+    "submitting": "Submitting Request...",
+    "submitBtn": "Submit Request"
+  },
+  "auth": {
+    "signInBadge": "Welcome Back",
+    "signUpBadge": "Create Account",
+    "signInTitle": "Log In to Your Account",
+    "signUpTitle": "Join PastPaperZone",
+    "optionalNote": "Login is optional. You can access and download papers for free!",
+    "labelName": "Full Name",
+    "labelEmail": "Email Address",
+    "labelPassword": "Password",
+    "labelConfirmPassword": "Confirm Password",
+    "signInBtn": "Sign In",
+    "signUpBtn": "Create Account",
+    "processing": "Please wait...",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "passwordsDoNotMatch": "Passwords do not match!",
+    "registerSuccess": "Account created successfully! You can now login.",
+    "loginSuccess": "Successfully logged in!"
+  },
+  "backToTop": {
+    "label": "Back to top"
+  },
+  "search": {
+    "placeholder": "Search subjects, e.g. Physics, Combined Maths...",
+    "searchButton": "Search",
+    "headingFor": "Search results for \"{query}\"",
+    "headingEmpty": "Search Past Papers",
+    "resultsCount": "{count} subject(s) found",
+    "emptyPrompt": "Type a subject name, code, or level (O/L, A/L) above to find its past papers.",
+    "noResultsTitle": "No subjects matched \"{query}\"",
+    "noResultsDesc": "Try a different keyword, or let us know which subject you're looking for.",
+    "requestButton": "Request a Missing Subject",
+    "codeLabel": "Code: {code}",
+    "viewLink": "View →"
+  }
+}
