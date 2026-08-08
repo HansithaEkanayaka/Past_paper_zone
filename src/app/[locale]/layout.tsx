@@ -41,6 +41,9 @@ export const metadata = {
   title: 'Past Paper Zone - G.C.E. O/L & A/L Past Papers Sri Lanka',
   description: 'Download Sri Lankan G.C.E. O/L and A/L past papers, marking schemes, and model papers for free on Past Paper Zone.',
   keywords: ['past paper zone', 'pastpaperzone', 'pastpaperzone.lk', 'ol past papers', 'al past papers'],
+  verification: {
+    google: '<meta name="google-site-verification" content="Da_thGZy2Oxv4HghEnCkDMzd_TIidhT6tw2elaHRRVU" />'
+  },
   openGraph: {
     title: 'Past Paper Zone',
     description: 'Download Sri Lankan O/L & A/L past papers and marking schemes.',
