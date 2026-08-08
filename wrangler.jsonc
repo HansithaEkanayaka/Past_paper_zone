@@ -7,5 +7,9 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
-  }
+  },
+  "routes": [
+    { "pattern": "pastpaperzone.lk", "custom_domain": true },
+    { "pattern": "www.pastpaperzone.lk", "custom_domain": true }
+  ]
 }
