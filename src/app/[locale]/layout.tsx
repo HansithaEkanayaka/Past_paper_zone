@@ -37,3 +37,14 @@ export default async function LocaleLayout({
     </NextIntlClientProvider>
   );
 }
+export const metadata = {
+  title: 'Past Paper Zone - G.C.E. O/L & A/L Past Papers Sri Lanka',
+  description: 'Download Sri Lankan G.C.E. O/L and A/L past papers, marking schemes, and model papers for free on Past Paper Zone.',
+  keywords: ['past paper zone', 'pastpaperzone', 'pastpaperzone.lk', 'ol past papers', 'al past papers'],
+  openGraph: {
+    title: 'Past Paper Zone',
+    description: 'Download Sri Lankan O/L & A/L past papers and marking schemes.',
+    url: 'https://pastpaperzone.lk',
+    siteName: 'Past Paper Zone',
+  },
+};
