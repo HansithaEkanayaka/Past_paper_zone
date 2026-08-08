@@ -1,0 +1,18 @@
+{
+  "/[locale]/admin/dashboard/page": "app/[locale]/admin/dashboard/page.js",
+  "/[locale]/admin/login/page": "app/[locale]/admin/login/page.js",
+  "/[locale]/page": "app/[locale]/page.js",
+  "/[locale]/search/page": "app/[locale]/search/page.js",
+  "/[locale]/subject/[id]/page": "app/[locale]/subject/[id]/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/admin/delete/route": "app/api/admin/delete/route.js",
+  "/api/admin/upload/route": "app/api/admin/upload/route.js",
+  "/api/auth/callback/route": "app/api/auth/callback/route.js",
+  "/api/auth/login/route": "app/api/auth/login/route.js",
+  "/api/auth/logout/route": "app/api/auth/logout/route.js",
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/request-paper/route": "app/api/request-paper/route.js",
+  "/api/stats/route": "app/api/stats/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js"
+}

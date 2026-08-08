@@ -1,0 +1,18 @@
+{
+  "/[locale]/admin/dashboard/page": "/[locale]/admin/dashboard",
+  "/[locale]/admin/login/page": "/[locale]/admin/login",
+  "/[locale]/page": "/[locale]",
+  "/[locale]/search/page": "/[locale]/search",
+  "/[locale]/subject/[id]/page": "/[locale]/subject/[id]",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/admin/delete/route": "/api/admin/delete",
+  "/api/admin/upload/route": "/api/admin/upload",
+  "/api/auth/callback/route": "/api/auth/callback",
+  "/api/auth/login/route": "/api/auth/login",
+  "/api/auth/logout/route": "/api/auth/logout",
+  "/api/auth/register/route": "/api/auth/register",
+  "/api/request-paper/route": "/api/request-paper",
+  "/api/stats/route": "/api/stats",
+  "/favicon.ico/route": "/favicon.ico"
+}
