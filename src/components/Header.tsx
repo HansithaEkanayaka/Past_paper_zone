@@ -24,6 +24,7 @@ export default function Header() {
   const {
     user,
     signOut,
+    refreshUser,
     isLoginModalOpen,
     openLoginModal,
     closeLoginModal,
@@ -79,7 +80,6 @@ export default function Header() {
     let ticking = false;
 
     const evaluate = () => {
-      // మొబైల్ view එකේදී (768px ට වඩා අඩු නම්) ස්ක්‍රෝල් කරද්දී header එක හංගන්න එපා
       if (window.innerWidth < 768) {
         setIsScrolled(false);
         ticking = false;
@@ -106,7 +106,7 @@ export default function Header() {
 
     evaluate();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("resize", evaluate); // screen size එක මාරු වෙද්දීත් ਚੈੱਕ කරන්න
+    window.addEventListener("resize", evaluate);
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", evaluate);
@@ -222,7 +222,7 @@ export default function Header() {
   return (
     <>
       <header className="w-full font-sans sticky top-0 z-40 bg-transparent overflow-hidden">
-        {/* Top row (Logo, Lang, Theme toggle සහ Mobile menu button එක) */}
+        {/* Top row */}
         <div
           style={{
             transform: isScrolled ? "translateY(-100%)" : "translateY(0)",
@@ -375,7 +375,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Navigation Bar - Desktop වලදී පමණක් පෙන්වයි */}
+        {/* Navigation Bar - Desktop */}
         <nav
           aria-label="Main Navigation"
           className={`px-4 md:px-16 py-3 transition-colors shadow-sm hidden md:block ${
@@ -445,7 +445,16 @@ export default function Header() {
               </form>
 
               {user ? (
-                <UserMenu />
+                <div className="flex items-center gap-3">
+                  {/* Desktop එකේ Profile එකට කෙලින්ම යාමට හැකි වන පරිදි සකස් කළ ලින්ක් එක */}
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full text-xs lg:text-sm font-semibold transition-colors"
+                  >
+                    <span>Profile</span>
+                  </Link>
+                  <UserMenu />
+                </div>
               ) : (
                 <button
                   type="button"
@@ -669,7 +678,10 @@ export default function Header() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
           <LoginForm
             onClose={() => closeLoginModal()}
-            onSuccess={() => closeLoginModal()}
+            onSuccess={async () => {
+              await refreshUser();
+              closeLoginModal();
+            }}
           />
         </div>
       )}
