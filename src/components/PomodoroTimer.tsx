@@ -1,8 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useTheme } from "@/context/ThemeContext";
+
+// Kept as a small local map (rather than a next-intl message key) so this
+// badge never throws MISSING_MESSAGE if a project's messages/*.json files
+// haven't been updated alongside this component.
+const SWITCH_BADGE_TEXT: Record<string, string> = {
+  en: "Switching to Pomodoro Timer",
+  si: "පොමඩෝරෝ ටයිමරයට මාරු වෙමින්",
+  ta: "போமடோரோ டைமருக்கு மாறுகிறது",
+};
 
 type TimerMode = "work" | "shortBreak" | "longBreak";
 
@@ -14,16 +23,92 @@ const TIMER_DURATIONS: Record<TimerMode, number> = {
 
 const MODE_ORDER: TimerMode[] = ["work", "shortBreak", "longBreak"];
 
+// Sessions are tracked per calendar day (in the browser's local time) and
+// saved to localStorage, so the "Today's Sessions" summary survives page
+// reloads instead of resetting to 0 every time.
+const STORAGE_KEY = "pomodoro-session-log";
+
+function todayKey() {
+  return new Date().toDateString();
+}
+
+function loadTodayStats(): { sessions: number; focusMinutes: number } {
+  if (typeof window === "undefined") return { sessions: 0, focusMinutes: 0 };
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { sessions: 0, focusMinutes: 0 };
+    const parsed = JSON.parse(raw);
+    if (parsed.date !== todayKey()) return { sessions: 0, focusMinutes: 0 };
+    return { sessions: parsed.sessions || 0, focusMinutes: parsed.focusMinutes || 0 };
+  } catch {
+    return { sessions: 0, focusMinutes: 0 };
+  }
+}
+
+function saveTodayStats(sessions: number, focusMinutes: number) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ date: todayKey(), sessions, focusMinutes })
+  );
+}
+
 export default function PomodoroTimer() {
   const { isDarkMode } = useTheme();
   const t = useTranslations("pomodoro");
+  const locale = useLocale();
+  const switchBadgeText = SWITCH_BADGE_TEXT[locale] || SWITCH_BADGE_TEXT.en;
 
   const [mode, setMode] = useState<TimerMode>("work");
   const [timeLeft, setTimeLeft] = useState<number>(TIMER_DURATIONS.work);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [sessionsCompleted, setSessionsCompleted] = useState<number>(0);
+  const [focusMinutes, setFocusMinutes] = useState<number>(0);
   const [isSoundOn, setIsSoundOn] = useState<boolean>(true);
   const [flashMessage, setFlashMessage] = useState<string>("");
+
+  // "Now switching to Pomodoro" badge - shown briefly the moment this
+  // section scrolls into view (e.g. coming down from Study Tips), so the
+  // jump from one section to the next is announced instead of silent.
+  const [showSwitchBadge, setShowSwitchBadge] = useState<boolean>(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const switchBadgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+
+    let hasEntered = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasEntered) {
+          hasEntered = true;
+          setShowSwitchBadge(true);
+          if (switchBadgeTimeoutRef.current) clearTimeout(switchBadgeTimeoutRef.current);
+          switchBadgeTimeoutRef.current = setTimeout(() => setShowSwitchBadge(false), 2500);
+        }
+        if (!entry.isIntersecting && entry.boundingClientRect.top > 0) {
+          // Scrolled back above the section - allow the badge to fire
+          // again next time it's scrolled into view.
+          hasEntered = false;
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+      if (switchBadgeTimeoutRef.current) clearTimeout(switchBadgeTimeoutRef.current);
+    };
+  }, []);
+
+  // Load today's saved progress once the component mounts in the browser.
+  useEffect(() => {
+    const stats = loadTodayStats();
+    setSessionsCompleted(stats.sessions);
+    setFocusMinutes(stats.focusMinutes);
+  }, []);
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -90,7 +175,15 @@ export default function PomodoroTimer() {
     showFlashMessage(t(messageKey));
 
     if (mode === "work") {
-      setSessionsCompleted((prev) => prev + 1);
+      setSessionsCompleted((prev) => {
+        const next = prev + 1;
+        setFocusMinutes((prevMinutes) => {
+          const nextMinutes = prevMinutes + TIMER_DURATIONS.work / 60;
+          saveTodayStats(next, nextMinutes);
+          return nextMinutes;
+        });
+        return next;
+      });
     }
   }, [timeLeft, isRunning, mode, playAlertSound, showFlashMessage, t]);
 
@@ -130,10 +223,27 @@ export default function PomodoroTimer() {
   return (
     <section
       id="pomodoro-section"
-      className={`w-full py-16 px-6 md:px-16 border-b transition-colors duration-300 ${
+      ref={sectionRef}
+      className={`relative w-full py-16 px-6 md:px-16 border-b transition-colors duration-300 ${
         isDarkMode ? "bg-[#171923] border-gray-800 text-white" : "bg-white border-gray-100 text-gray-900"
       }`}
     >
+      {/* "Now switching" badge - fades in as the section is scrolled into
+          view, then fades itself back out a couple of seconds later. */}
+      <div
+        aria-live="polite"
+        className={`absolute top-3 left-1/2 -translate-x-1/2 z-10 transition-opacity duration-300 ${
+          showSwitchBadge ? "opacity-100 animate-switchBadge" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <span className="inline-flex items-center gap-2 text-xs font-bold px-4 py-1.5 rounded-full bg-[#DD6B20] text-white shadow-lg shadow-orange-500/30">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M19 12l-7 7-7-7" />
+          </svg>
+          {switchBadgeText}
+        </span>
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold text-[#DD6B20] bg-orange-500/10 px-4 py-1.5 rounded-full border border-orange-500/30 uppercase tracking-wider">
@@ -261,10 +371,37 @@ export default function PomodoroTimer() {
             {flashMessage}
           </div>
 
-          {/* Sessions Completed */}
-          <div className={`mt-6 pt-6 border-t text-sm font-medium ${isDarkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"}`}>
-            {t("sessionsCompleted")}:{" "}
-            <span className="font-bold text-[#DD6B20]">{sessionsCompleted}</span>
+          {/* Today's Summary */}
+          <div
+            className={`mt-6 pt-6 border-t grid grid-cols-2 gap-3 ${
+              isDarkMode ? "border-gray-700" : "border-gray-200"
+            }`}
+          >
+            <div
+              className={`rounded-xl p-3 text-center ${
+                isDarkMode ? "bg-[#171923]" : "bg-white border border-gray-200"
+              }`}
+            >
+              <p className={`text-2xl font-black ${isDarkMode ? "text-white" : "text-[#1A365D]"}`}>
+                {sessionsCompleted}
+              </p>
+              <p className={`text-xs font-medium mt-0.5 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                {t("sessionsCompleted")} Today
+              </p>
+            </div>
+            <div
+              className={`rounded-xl p-3 text-center ${
+                isDarkMode ? "bg-[#171923]" : "bg-white border border-gray-200"
+              }`}
+            >
+              <p className={`text-2xl font-black ${isDarkMode ? "text-white" : "text-[#1A365D]"}`}>
+                {Math.round(focusMinutes)}
+                <span className="text-sm font-bold">m</span>
+              </p>
+              <p className={`text-xs font-medium mt-0.5 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                Focused Today
+              </p>
+            </div>
           </div>
         </div>
       </div>
