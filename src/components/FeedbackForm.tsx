@@ -9,17 +9,38 @@ export default function FeedbackForm() {
   const t = useTranslations("feedback");
   const [rating, setRating] = useState<number>(5);
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     comment: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.comment) {
-      setSubmitted(true);
-      setFormData({ name: "", email: "", comment: "" });
+    if (!formData.name || !formData.comment) return;
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, rating }),
+      });
+
+      if (res.ok) {
+        setSubmitted(true);
+        setFormData({ name: "", email: "", comment: "" });
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -128,11 +149,16 @@ export default function FeedbackForm() {
                 />
               </div>
 
+              {error && (
+                <p className="text-sm font-semibold text-red-500">{error}</p>
+              )}
+
               <button
                 type="submit"
-                className="w-full bg-[#DD6B20] hover:bg-[#c05621] text-white font-bold text-base py-3.5 rounded-xl shadow-md transition-all duration-200"
+                disabled={submitting}
+                className="w-full bg-[#DD6B20] hover:bg-[#c05621] text-white font-bold text-base py-3.5 rounded-xl shadow-md transition-all duration-200 disabled:opacity-60"
               >
-                {t("submitButton")}
+                {submitting ? "Submitting..." : t("submitButton")}
               </button>
             </form>
           )}
