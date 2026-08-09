@@ -7,7 +7,6 @@ import { Link, useRouter, usePathname } from "@/i18n/navigation";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
 import LoginForm from "@/components/LoginForm";
-import UserMenu from "@/components/UserMenu";
 
 interface Language {
   code: string;
@@ -445,15 +444,30 @@ export default function Header() {
               </form>
 
               {user ? (
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/profile"
-                    className="text-xs lg:text-sm font-semibold text-white hover:text-[#DD6B20] transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <UserMenu />
-                </div>
+                /* නම සහ ප්‍රොෆයිල් පින්තූරය පෙන්වන කොටස ක්ලික් කළ විට /profile වෙත යාමට සකස් කර ඇත[cite: 1] */
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2.5 bg-black/30 hover:bg-black/50 border border-gray-700/60 py-1 px-3 rounded-full transition-all group"
+                >
+                  {(user.user_metadata?.avatar_url || user.user_metadata?.picture) ? (
+                    <Image
+                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                      alt=""
+                      width={28}
+                      height={28}
+                      className="w-7 h-7 rounded-full object-cover border border-[#DD6B20]"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-[#DD6B20] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                      {((user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email || "U")
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+                  )}
+                  <span className="text-white text-xs lg:text-sm font-medium group-hover:text-[#DD6B20] transition-colors truncate max-w-[120px]">
+                    {(user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email}
+                  </span>
+                </Link>
               ) : (
                 <button
                   type="button"
@@ -601,7 +615,11 @@ export default function Header() {
             <div className="pt-6 border-t border-gray-700">
               {user ? (
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2 min-w-0 group"
+                  >
                     {(user.user_metadata?.avatar_url || user.user_metadata?.picture) ? (
                       <Image
                         src={user.user_metadata.avatar_url || user.user_metadata.picture}
@@ -617,29 +635,20 @@ export default function Header() {
                           .toUpperCase()}
                       </div>
                     )}
-                    <span className="text-white text-sm font-semibold truncate">
+                    <span className="text-white text-sm font-semibold group-hover:text-[#DD6B20] transition-colors truncate">
                       {(user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email}
                     </span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                      href="/profile"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="text-xs font-bold text-white/85 hover:text-white px-2 py-2"
-                    >
-                      Profile
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        setIsMenuOpen(false);
-                        await signOut();
-                      }}
-                      className="text-xs font-bold text-red-400 hover:text-red-300 px-2 py-2"
-                    >
-                      Log Out
-                    </button>
-                  </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsMenuOpen(false);
+                      await signOut();
+                    }}
+                    className="text-xs font-bold text-red-400 hover:text-red-300 px-2 py-2 shrink-0"
+                  >
+                    Log Out
+                  </button>
                 </div>
               ) : (
                 <button
