@@ -349,5 +349,20 @@
     "sec5Text": "If You have any questions about this Privacy Policy, You can contact us:",
     "contactEmail": "By email: pastpaperzone@gmail.com",
     "contactWeb": "By visiting this page on Our Website: https://pastpaperzone.lk"
+  },
+    "termsPage": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: August 10, 2026",
+    "sec1Heading": "1. Introduction",
+    "sec1Text": "Welcome to PastPaperZone (",
+    "sec1Text2": "). By accessing or using our website, you agree to be bound by these Terms of Service.",
+    "sec2Heading": "2. Use of Service",
+    "sec2Text": "PastPaperZone provides educational past papers and resources for students. You agree to use this platform only for lawful educational purposes and in a way that does not infringe the rights of others.",
+    "sec3Heading": "3. User Accounts",
+    "sec3Text": "When you sign in using Google via Supabase, you are responsible for maintaining the security of your account and for all activities that occur under your account.",
+    "sec4Heading": "4. Intellectual Property",
+    "sec4Text": "The content, features, and functionality of PastPaperZone are owned by us and are protected by international copyright and intellectual property laws.",
+    "sec5Heading": "5. Contact Us",
+    "sec5Text": "If you have any questions about these Terms, please contact us at:"
   }
 }
