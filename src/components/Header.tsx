@@ -446,12 +446,11 @@ export default function Header() {
 
               {user ? (
                 <div className="flex items-center gap-3">
-                  {/* Desktop එකේ Profile එකට කෙලින්ම යාමට හැකි වන පරිදි සකස් කළ ලින්ක් එක */}
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-full text-xs lg:text-sm font-semibold transition-colors"
+                    className="text-xs lg:text-sm font-semibold text-white hover:text-[#DD6B20] transition-colors"
                   >
-                    <span>Profile</span>
+                    Profile
                   </Link>
                   <UserMenu />
                 </div>
