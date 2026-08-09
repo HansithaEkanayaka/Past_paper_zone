@@ -80,11 +80,11 @@ export default function Header() {
 
     const evaluate = () => {
       const y = window.scrollY;
-      if (y <= 16) {
+      if (y <= 20) {
         setIsScrolled(false);
-      } else if (y > lastY && y > 96) {
+      } else if (y > lastY && y > 80) {
         setIsScrolled(true);
-      } else if (y < lastY - 4) {
+      } else if (y < lastY - 5) {
         setIsScrolled(false);
       }
       lastY = y;
@@ -210,12 +210,16 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full font-sans sticky top-0 z-40 shadow-sm bg-transparent">
-        {/* මෙහි top row එක scroll කරන විට නිවැරදිව hide/show වන පරිදි සකසා ඇත */}
+      <header className="w-full font-sans sticky top-0 z-40 bg-transparent overflow-hidden">
+        {/* Top row (Logo, Lang, Theme toggle සහ Mobile menu button එක) */}
         <div
-          className={`w-full transition-all duration-300 overflow-hidden ${
-            isScrolled ? "max-h-0 opacity-0" : "max-h-32 opacity-100"
-          }`}
+          style={{
+            transform: isScrolled ? "translateY(-100%)" : "translateY(0)",
+            opacity: isScrolled ? 0 : 1,
+            visibility: isScrolled ? "hidden" : "visible",
+            transition: "transform 0.3s ease-in-out, opacity 0.2s ease-in-out",
+          }}
+          className="w-full"
         >
           <div
             className={`flex items-center justify-between gap-2 px-4 md:px-16 py-3 ${
@@ -327,6 +331,7 @@ export default function Header() {
                 )}
               </button>
 
+              {/* Mobile Menu Toggle Button (Theme toggle එකට ළඟින්, md:hidden නිසා ඩිස්ක්ටොප් එකේදී නොපෙන්වයි) */}
               <button
                 ref={menuButtonRef}
                 type="button"
@@ -334,7 +339,7 @@ export default function Header() {
                 aria-expanded={isMenuOpen}
                 aria-controls="mobile-drawer"
                 aria-label={t("openMenu")}
-                className={`md:hidden p-1.5 rounded-lg border-0 outline-none ring-1 ring-inset transition-colors ${
+                className={`md:hidden p-1.5 sm:p-2 rounded-lg border-0 outline-none ring-1 ring-inset transition-colors ${
                   isDarkMode
                     ? "bg-[#2D3748] ring-gray-600 text-white focus:ring-2 focus:ring-[#DD6B20]"
                     : "bg-white ring-gray-300 text-gray-800 focus:ring-2 focus:ring-[#DD6B20]"
@@ -342,7 +347,7 @@ export default function Header() {
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
+                  className="h-4 w-4 sm:h-5 sm:w-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -360,9 +365,10 @@ export default function Header() {
           </div>
         </div>
 
+        {/* Navigation Bar - Desktop වලදී පමණක් පෙන්වයි (hidden md:block) */}
         <nav
           aria-label="Main Navigation"
-          className={`px-4 md:px-16 py-3 transition-colors shadow-sm ${
+          className={`px-4 md:px-16 py-3 transition-colors shadow-sm hidden md:block ${
             isDarkMode ? "bg-[#171923]" : "bg-[#1A365D]"
           }`}
         >
@@ -454,37 +460,11 @@ export default function Header() {
                   </svg>
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={() => setIsMenuOpen(true)}
-                aria-expanded={isMenuOpen}
-                aria-controls="mobile-drawer"
-                aria-label={t("openMenu")}
-                className={`md:hidden p-1.5 rounded-lg border border-white/30 text-white hover:bg-white/10 outline-none focus:ring-2 focus:ring-[#DD6B20] ${
-                  isScrolled ? "flex" : "hidden"
-                }`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
             </div>
           </div>
         </nav>
 
+        {/* Mobile Menu Drawer */}
         <div
           className={`fixed inset-0 z-50 md:hidden transition-opacity duration-300 ${
             isMenuOpen
