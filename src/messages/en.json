@@ -169,7 +169,8 @@
     "soundOffLabel": "Unmute alert sound",
     "timeUpWork": "Work session complete! Time for a break.",
     "timeUpShortBreak": "Short break over! Back to work.",
-    "timeUpLongBreak": "Long break over! Ready for another round?"
+    "timeUpLongBreak": "Long break over! Ready for another round?",
+    "switchingBadge": "Switching to Pomodoro Timer"
   },
   "subjectDetail": {
     "backToAll": "Back to All Subjects",
@@ -199,7 +200,7 @@
   "missingRequest": {
     "bannerTitle": "Is there any Subject or Paper missing?",
     "bannerDesc": "If there is any Past Paper or Marking Scheme missing on our website, please let us know. We will upload it as soon as possible.",
-    "buttonText": "Request Missing Paper / Subject →",
+    "buttonText": "Request Missing Paper →",
     "modalBadge": "Paper Request Form",
     "modalTitle": "Request or Report Missing Content",
     "modalSubtitle": "Send us the details of the subject or paper you need using the form below.",
@@ -257,5 +258,19 @@
     "requestButton": "Request a Missing Subject",
     "codeLabel": "Code: {code}",
     "viewLink": "View →"
+  },
+  "disclaimerPage": {
+    "title": "Disclaimer",
+    "lastUpdated": "This page was last updated August 2026.",
+    "p1Heading": "Not an official government website",
+    "p1": "PastPaperZone is an independent, student-run project and is not affiliated with, endorsed by, or connected to the Department of Examinations, Sri Lanka, or the Ministry of Education in any way.",
+    "p2Heading": "Where the papers come from",
+    "p2": "All past papers and marking schemes on this site are exam materials that were already released to the public. We collect and organise them for free, easy access - we do not claim authorship of the original exam content.",
+    "p3Heading": "No guarantee of accuracy",
+    "p3": "We try our best to make sure every paper and marking scheme is correctly labelled and complete, but mistakes can happen (a wrong year, a wrong medium, a missing page). Please cross-check important details with your school or tuition class before an exam.",
+    "p4Heading": "Educational use only",
+    "p4": "Everything on this site is provided for personal study purposes, free of charge. Please do not re-upload or resell this content elsewhere.",
+    "p5Heading": "Found a problem?",
+    "p5": "If you believe a file infringes your rights, or you've spotted an error, use the \"Request Missing Paper\" or \"Contact Us\" form and we will review it promptly."
   }
 }
