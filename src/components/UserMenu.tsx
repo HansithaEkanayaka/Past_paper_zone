@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { createClient } from "@/lib/supabase/client";
+import { Link } from "@/i18n/navigation";
 
 export default function UserMenu() {
   const { user, refreshUser, signOut } = useAuth();
@@ -36,7 +37,6 @@ export default function UserMenu() {
       const supabase = createClient();
       const filePath = `${user.id}/${Date.now()}-${file.name}`;
 
-      // Requires a public "avatars" bucket created in Supabase Storage
       const { error: uploadErr } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true });
@@ -86,7 +86,6 @@ export default function UserMenu() {
 
       {isOpen && (
         <>
-          {/* click-away backdrop */}
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div
             className={`absolute right-0 mt-3 w-64 rounded-2xl border shadow-2xl z-50 p-4 ${
@@ -116,6 +115,14 @@ export default function UserMenu() {
             {uploadError && (
               <p className="text-xs text-red-400 mb-2">{uploadError}</p>
             )}
+
+            <Link
+              href="/profile"
+              onClick={() => setIsOpen(false)}
+              className="block w-full text-left text-xs font-bold px-3 py-2 rounded-xl hover:bg-[#DD6B20]/10 text-[#DD6B20] transition-all"
+            >
+              View Profile
+            </Link>
 
             <button
               type="button"

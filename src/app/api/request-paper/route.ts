@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendSiteEmail } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +13,18 @@ export async function POST(request: Request) {
     console.log(`Topic: ${topic}`);
     console.log(`Message: ${message}`);
 
-    // මෙතනදී ඔබට අවශ්‍ය නම් Telegram Bot එකකට/Discord Webhook එකකට හෝ Email එකකට Message එකක් Send වන ලෙස සකස් කළ හැක.
+    await sendSiteEmail({
+      subject: `[PastPaperZone] Missing Paper Request: ${subject || "Untitled"}`,
+      replyTo: email,
+      html: `
+        <h2>New Missing Paper / Subject Request</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Topic:</strong> ${topic}</p>
+        <p><strong>Message:</strong><br/>${(message || "").replace(/\n/g, "<br/>")}</p>
+      `,
+    });
 
     return NextResponse.json({ success: true, message: "Request received" });
   } catch (error) {

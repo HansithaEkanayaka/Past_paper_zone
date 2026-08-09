@@ -7,9 +7,11 @@ import { useTranslations } from "next-intl";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SubjectDetailPage() {
   const { isDarkMode } = useTheme();
+  const { user, openLoginModal } = useAuth();
   const params = useParams();
   const subjectId = params.id as string;
 
@@ -39,13 +41,26 @@ export default function SubjectDetailPage() {
 
   const docTypeLabel = docType === "paper" ? t("questionPaperTab") : t("markingSchemeTab");
 
-  // 1. Cloudflare R2 Base URL එක ලබා ගැනීම
-  const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "";
-
-  // 2. R2 එකේ File URL එක සකස් කිරීම
-  const getFileUrl = () => {
+  // Files are served through our own /api/paper route (same domain, and it
+  // requires the visitor to be logged in) instead of the raw R2 URL.
+  const getFileUrl = (action: "view" | "download") => {
     if (!selectedYear) return "#";
-    return `${R2_PUBLIC_URL}/papers/${subjectId}/${selectedYear}/${selectedMedium}/${docType}.pdf`;
+    const params = new URLSearchParams({
+      subject: subjectId,
+      year: selectedYear,
+      medium: selectedMedium,
+      type: docType,
+      action,
+    });
+    return `/api/paper?${params.toString()}`;
+  };
+
+  const requireLogin = (): boolean => {
+    if (!user) {
+      openLoginModal();
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -225,6 +240,7 @@ export default function SubjectDetailPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      if (requireLogin()) return;
                       setPreviewFailed(false);
                       setShowPreview((prev) => !prev);
                     }}
@@ -241,11 +257,12 @@ export default function SubjectDetailPage() {
                     </span>
                   </button>
 
-                  {/* Cloudflare R2 Direct Download Button */}
+                  {/* Download Button - served from our own domain via /api/paper */}
                   <a
-                    href={getFileUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={getFileUrl("download")}
+                    onClick={(e) => {
+                      if (requireLogin()) e.preventDefault();
+                    }}
                     className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[#DD6B20] hover:bg-orange-600 text-white font-bold text-sm transition-all duration-200 shadow-md hover:shadow-lg w-full"
                   >
                     <span>{t("downloadButton", { docType: docTypeLabel })}</span>
@@ -262,8 +279,8 @@ export default function SubjectDetailPage() {
                     >
                       {!previewFailed ? (
                         <iframe
-                          key={getFileUrl()}
-                          src={getFileUrl()}
+                          key={getFileUrl("view")}
+                          src={getFileUrl("view")}
                           title={t("previewButton")}
                           className="w-full h-[70vh] bg-white"
                           onError={() => setPreviewFailed(true)}

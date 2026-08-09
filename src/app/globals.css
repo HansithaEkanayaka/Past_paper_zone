@@ -32,8 +32,83 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
   overflow-x: clip;
   width: 100%;
   position: relative;
+}
+
+/* Brand heading font - used for the site logo/name and section headings so
+   they read as one consistent brand instead of the browser's default
+   generic serif (which is what Tailwind's `font-serif` falls back to). */
+.font-brand {
+  font-family: var(--font-poppins), "Poppins", Arial, Helvetica, sans-serif;
+}
+
+/* Generic fade-in used across modals/step transitions. */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out both;
+}
+
+/* "Now switching to..." badge that appears briefly above a section as it
+   scrolls into view (e.g. Study Tips -> Pomodoro Timer). */
+@keyframes switchBadgeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-switchBadge {
+  animation: switchBadgeIn 0.35s ease-out both;
+}
+
+/* Header top row (logo / language select / theme toggle) collapse.
+   A `grid-template-rows: 1fr -> 0fr` transition animates smoothly to
+   the row's actual rendered height, unlike animating a fixed max-height
+   (e.g. max-h-24) which has to snap once the transition finishes if the
+   real content height doesn't match that fixed value exactly - that
+   mismatch is what caused the visible "jump" when scroll direction
+   reversed near the collapse point. */
+
+
+/* Header toprow smooth transition without layout jumping */
+.header-toprow {
+  max-height: 120px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms ease, padding 300ms ease;
+}
+
+
+.header-toprow-collapsed {
+  max-height: 0px;
+  opacity: 0;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  pointer-events: none;
+}
+
+.header-toprow-inner {
+  min-height: 0;
+  overflow: hidden;
+  transition: opacity 200ms ease;
+}
+
+.header-toprow-collapsed .header-toprow-inner {
+  opacity: 0;
+  pointer-events: none;
 }
