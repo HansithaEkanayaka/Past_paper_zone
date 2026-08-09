@@ -284,5 +284,70 @@
     "countdownTo": "Countdown to {fullName}",
     "ongoingMsg": "Exam is currently in progress! All the best!",
     "doneMsg": "Successfully completed. Well done!"
+  },
+    "privacyPage": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: August 09, 2026",
+    "intro1": "This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your information when You use the Service and tells You about Your privacy rights and how the law protects You.",
+    "intro2": "We use Your Personal Data to provide and improve the Service. We collect, use, and disclose Your information as described in this Privacy Policy and, where required by applicable law, only where We have a valid legal basis to do so, including Your consent (where consent is required). This Privacy Policy has been created with the help of the",
+    
+    "sec1Heading": "Interpretation and Definitions",
+    "sec1Sub1Heading": "Interpretation",
+    "sec1Sub1Text": "The words whose initial letters are capitalized have meanings defined under the following conditions. The following definitions shall have the same meaning regardless of whether they appear in singular or in plural.",
+    "sec1Sub2Heading": "Definitions",
+    "sec1Sub2Text": "For the purposes of this Privacy Policy:",
+    
+    "def1": "Account means a unique account created for You to access Our Service or parts of Our Service.",
+    "def2": "Affiliate means an entity that controls, is controlled by, or is under common control with a party.",
+    "def3": "Company refers to PastPaperZone.",
+    "def4": "Cookies are small files placed on Your computer or mobile device by a website.",
+    "def5": "Country refers to: Sri Lanka.",
+    "def6": "Device means any device that can access the Service.",
+    "def7": "Personal Data is any information that relates to an identified or identifiable individual.",
+    "def8": "Service refers to the Website.",
+    "def9": "Service Provider means any natural or legal person who processes data on behalf of the Company.",
+    "def10": "Usage Data refers to data collected automatically from the use of the Service.",
+    "def11": "User means the individual accessing or using the Service.",
+    "def12": "Website refers to PastPaperZone, accessible from https://pastpaperzone.lk",
+    "def13": "You means the individual accessing or using the Service.",
+
+    "sec2Heading": "Collecting and Using Your Personal Information",
+    "sec2Sub1Heading": "Types of Data Collected",
+    "sec2Sub1_1Heading": "Personal Data",
+    "sec2Sub1_1Text": "While using Our Service, We may ask You to provide Us with certain personally identifiable information:",
+    "personalData1": "Email address",
+    "personalData2": "First name and last name",
+
+    "sec2Sub1_2Heading": "Usage Data",
+    "sec2Sub1_2Text": "Usage Data is collected automatically when using the Service, including IP address, browser type, and pages visited.",
+    
+    "sec2Sub1_3Heading": "Tracking Technologies and Cookies",
+    "sec2Sub1_3Text": "We use cookies and similar tracking technologies to track activity on Our Service and store certain information.",
+
+    "sec2Sub2Heading": "Use of Your Personal Data",
+    "sec2Sub2Text": "The Company may use Personal Data for the following purposes:",
+    "useData1": "To provide and maintain Our Service",
+    "useData2": "To manage Your Account",
+    "useData3": "To contact You",
+    "useData4": "To manage Your requests",
+    "useData5": "For business transfers",
+    "useData6": "For other purposes like data analysis",
+
+    "sec2Sub3Heading": "Retention of Your Personal Data",
+    "sec2Sub3Text": "The Company will retain Your Personal Data only for as long as is necessary for the purposes set out in this Privacy Policy.",
+
+    "sec2Sub4Heading": "Security of Your Personal Data",
+    "sec2Sub4Text": "The security of Your Personal Data is important to Us, but no method of transmission over the Internet is 100% secure.",
+
+    "sec3Heading": "Children's Privacy",
+    "sec3Text": "Our Service does not address anyone under the age of 16. We do not knowingly collect personally identifiable information from anyone under 16.",
+
+    "sec4Heading": "Changes to this Privacy Policy",
+    "sec4Text": "We may update Our Privacy Policy from time to time. We will notify You of any changes by posting the new Privacy Policy on this page.",
+
+    "sec5Heading": "Contact Us",
+    "sec5Text": "If You have any questions about this Privacy Policy, You can contact us:",
+    "contactEmail": "By email: pastpaperzone@gmail.com",
+    "contactWeb": "By visiting this page on Our Website: https://pastpaperzone.lk"
   }
 }
