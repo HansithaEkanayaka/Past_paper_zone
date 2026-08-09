@@ -272,5 +272,17 @@
     "p4": "Everything on this site is provided for personal study purposes, free of charge. Please do not re-upload or resell this content elsewhere.",
     "p5Heading": "Found a problem?",
     "p5": "If you believe a file infringes your rights, or you've spotted an error, use the \"Request Missing Paper\" or \"Contact Us\" form and we will review it promptly."
+  },
+    "countdown": {
+    "trackerBadge": "Official Examination Tracker",
+    "days": "Days",
+    "hours": "Hours",
+    "mins": "Mins",
+    "secs": "Secs",
+    "examDone": "The {year} {label} Exam is over — well done!",
+    "examOngoing": "The {year} {label} Exam is currently underway — all the best!",
+    "countdownTo": "Countdown to {fullName}",
+    "ongoingMsg": "Exam is currently in progress! All the best!",
+    "doneMsg": "Successfully completed. Well done!"
   }
 }

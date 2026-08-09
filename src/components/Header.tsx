@@ -79,6 +79,13 @@ export default function Header() {
     let ticking = false;
 
     const evaluate = () => {
+      // మొబైల్ view එකේදී (768px ට වඩා අඩු නම්) ස්ක්‍රෝල් කරද්දී header එක හංගන්න එපා
+      if (window.innerWidth < 768) {
+        setIsScrolled(false);
+        ticking = false;
+        return;
+      }
+
       const y = window.scrollY;
       if (y <= 20) {
         setIsScrolled(false);
@@ -99,7 +106,11 @@ export default function Header() {
 
     evaluate();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", evaluate); // screen size එක මාරු වෙද්දීත් ਚੈੱਕ කරන්න
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", evaluate);
+    };
   }, []);
 
   useEffect(() => {
@@ -331,7 +342,6 @@ export default function Header() {
                 )}
               </button>
 
-              {/* Mobile Menu Toggle Button (Theme toggle එකට ළඟින්, md:hidden නිසා ඩිස්ක්ටොප් එකේදී නොපෙන්වයි) */}
               <button
                 ref={menuButtonRef}
                 type="button"
@@ -365,7 +375,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Navigation Bar - Desktop වලදී පමණක් පෙන්වයි (hidden md:block) */}
+        {/* Navigation Bar - Desktop වලදී පමණක් පෙන්වයි */}
         <nav
           aria-label="Main Navigation"
           className={`px-4 md:px-16 py-3 transition-colors shadow-sm hidden md:block ${
@@ -373,7 +383,7 @@ export default function Header() {
           }`}
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            <ul className="flex items-center gap-4 sm:gap-6 md:gap-8 overflow-x-auto py-1">
+            <ul className="flex flex-wrap items-center gap-3 lg:gap-6 py-1">
               {navLinks.map((link) => {
                 const isActive = isNavLinkActive(link.href);
                 return (
@@ -381,7 +391,7 @@ export default function Header() {
                     <Link
                       href={link.href}
                       aria-current={isActive ? "page" : undefined}
-                      className={`text-xs sm:text-sm font-semibold transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[#DD6B20] rounded px-1.5 py-1 ${
+                      className={`text-xs lg:text-sm font-semibold transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-[#DD6B20] rounded px-1.5 py-1 ${
                         isActive
                           ? "text-[#DD6B20]"
                           : "text-white hover:text-[#DD6B20]"
@@ -398,7 +408,7 @@ export default function Header() {
               <form
                 onSubmit={handleSearchSubmit}
                 role="search"
-                className="relative hidden sm:flex items-center w-40 md:w-64"
+                className="relative hidden sm:flex items-center w-36 lg:w-64"
               >
                 <label htmlFor="desktop-site-search" className="sr-only">
                   {t("searchLabel")}
@@ -409,7 +419,7 @@ export default function Header() {
                   placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-1.5 pr-10 text-sm text-gray-900 bg-white rounded-full outline-none ring-0 focus:ring-2 focus:ring-[#DD6B20] placeholder-gray-500 shadow-inner"
+                  className="w-full px-4 py-1.5 pr-10 text-xs lg:text-sm text-gray-900 bg-white rounded-full outline-none ring-0 focus:ring-2 focus:ring-[#DD6B20] placeholder-gray-500 shadow-inner"
                 />
                 <button
                   type="submit"
@@ -440,7 +450,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => openLoginModal()}
-                  className="flex items-center justify-center gap-1.5 text-white text-xs sm:text-sm font-semibold hover:text-[#DD6B20] outline-none focus-visible:ring-2 focus-visible:ring-[#DD6B20] rounded px-2 py-1 transition-colors"
+                  className="flex items-center justify-center gap-1.5 text-white text-xs lg:text-sm font-semibold hover:text-[#DD6B20] outline-none focus-visible:ring-2 focus-visible:ring-[#DD6B20] rounded px-2 py-1 transition-colors"
                 >
                   <span className="hidden sm:inline">{t("login")}</span>
                   <svg
