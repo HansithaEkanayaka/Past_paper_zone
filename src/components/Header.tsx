@@ -397,8 +397,14 @@ export default function Header() {
         {/* Navigation Bar - Desktop */}
         <nav
           aria-label="Main Navigation"
-          className={`px-4 md:px-16 py-3 transition-colors shadow-sm hidden md:block ${
-            isDarkMode ? "bg-[#171923]" : "bg-[#1A365D]"
+          className={`transition-all duration-300 ease-in-out shadow-sm hidden md:block ${
+            isScrolled
+              ? `md:mx-6 lg:mx-12 md:mt-3 px-6 py-2.5 rounded-full shadow-lg backdrop-blur-md saturate-150 ${
+                  isDarkMode ? "bg-[#171923]/70" : "bg-[#1A365D]/70"
+                }`
+              : `px-4 md:px-16 py-3 rounded-none ${
+                  isDarkMode ? "bg-[#171923]" : "bg-[#1A365D]"
+                }`
           }`}
         >
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
