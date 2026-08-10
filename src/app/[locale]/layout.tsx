@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Poppins, Inter } from "next/font/google";
+import { Baloo_2, Nunito } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -7,23 +7,27 @@ import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import BackToTopButton from "@/components/BackToTopButton";
+import CookieBanner from "@/components/CookieBanner";
 import "@/app/globals.css";
 
-// Brand fonts: Poppins for the logo/headings (bold, friendly, matches an
-// education/study-tools brand), Inter for regular body text. Both are
+// Brand fonts: Baloo 2 is a bold, rounded, friendly display font used for
+// the logo/headings (matches an education/study-tools brand much better
+// than a plain grotesque like Google Sans Flex), Nunito is a softly
+// rounded but very readable font used for regular body text. Both are
 // exposed as CSS variables so any component can opt in via
-// `font-[family-name:var(--font-poppins)]` or the `.font-brand` helper
+// `font-[family-name:var(--font-heading)]` or the `.font-brand` helper
 // class added in globals.css.
-const poppins = Poppins({
+const baloo2 = Baloo_2({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
-  variable: "--font-poppins",
+  variable: "--font-heading",
   display: "swap",
 });
 
-const inter = Inter({
+const nunito = Nunito({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-body",
   display: "swap",
 });
 
@@ -48,11 +52,12 @@ export default async function LocaleLayout({
       <ThemeProvider>
         <AuthProvider>
           <div
-            className={`${poppins.variable} ${inter.variable} antialiased transition-colors duration-300`}
+            className={`${baloo2.variable} ${nunito.variable} antialiased transition-colors duration-300`}
           >
             {children}
           </div>
           <BackToTopButton />
+          <CookieBanner />
         </AuthProvider>
       </ThemeProvider>
     </NextIntlClientProvider>

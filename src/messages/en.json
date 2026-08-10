@@ -296,6 +296,18 @@
     "ongoingMsg": "Exam is currently in progress! Best of luck to all students!",
     "doneMsg": "Successfully concluded. Best of luck!"
   },
+  "timetable": {
+    "badge": "Exam Timetable",
+    "subtitle": "For the {year} Examination - Plan your studies effectively",
+    "examPeriod": "Exam Period",
+    "officialSource": "Official Source",
+    "verifyNote": "Always verify information from the official source",
+    "daysToGo": "Days to go",
+    "untilLabel": "Until the {label} exam begins",
+    "downloadButton": "Download {year} {label} Timetable",
+    "preparing": "Preparing...",
+    "notReleased": "The {label} timetable has not been released yet."
+  },
   "privacyPage": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: August 09, 2026",

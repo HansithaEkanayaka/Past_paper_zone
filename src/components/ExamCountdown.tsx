@@ -3,36 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useTheme } from "@/context/ThemeContext";
 import { useTranslations } from "use-intl";
-
-type ExamLevel = "ol" | "al";
-
-interface ExamDefinition {
-  level: ExamLevel;
-  label: string;
-  fullName: string;
-  start: Date;
-  end: Date;
-  dateRangeLabel: string;
-}
-
-const EXAMS: Record<ExamLevel, ExamDefinition> = {
-  ol: {
-    level: "ol",
-    label: "O/L",
-    fullName: "G.C.E. Ordinary Level (O/L)",
-    start: new Date("2026-12-08T00:00:00+05:30"),
-    end: new Date("2026-12-17T00:00:00+05:30"),
-    dateRangeLabel: "8 – 17 December 2026",
-  },
-  al: {
-    level: "al",
-    label: "A/L",
-    fullName: "G.C.E. Advanced Level (A/L)",
-    start: new Date("2026-08-10T00:00:00+05:30"),
-    end: new Date("2026-09-05T00:00:00+05:30"),
-    dateRangeLabel: "10 August – 5 September 2026",
-  },
-};
+import { EXAMS, ExamLevel, ExamDefinition } from "@/lib/examDates";
 
 interface TimeLeft {
   days: number;

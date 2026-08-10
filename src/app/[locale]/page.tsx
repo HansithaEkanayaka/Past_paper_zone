@@ -12,6 +12,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import ExamCountdown from "@/components/ExamCountdown";
+import ExamTimetable from "@/components/ExamTimetable";
 import SubjectCard from "@/components/SubjectCard";
 import StudyTipCard from "@/components/StudyTIpCard";
 import PomodoroTimer from "@/components/PomodoroTimer";
@@ -24,6 +25,7 @@ export default function Home() {
     <main>
       <Header />
       <Hero />
+      <ExamTimetable />
       <ExamCountdown />
       <SubjectCard />
       <StudyTipCard />

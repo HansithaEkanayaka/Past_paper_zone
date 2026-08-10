@@ -19,6 +19,23 @@ export default function SearchPageClient() {
 
   const query = searchParams.get("q")?.trim() ?? "";
   const [inputValue, setInputValue] = useState(query);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
+  // Live hints while typing, matched the same way as the header search box.
+  const suggestions = useMemo(() => {
+    const needle = inputValue.trim().toLowerCase();
+    if (!needle) return [];
+    return ALL_SUBJECTS.filter((subject) => {
+      const name = tSubjects(`subjects.${subject.id}`).toLowerCase();
+      return (
+        name.includes(needle) ||
+        subject.id.toLowerCase().includes(needle) ||
+        subject.code.toLowerCase().includes(needle)
+      );
+    }).slice(0, 6);
+  }, [inputValue, tSubjects]);
+
+  const showSuggestions = isInputFocused && suggestions.length > 0;
 
   // Resolve translated names once per render, then filter against the query.
   const results = useMemo(() => {
@@ -78,7 +95,7 @@ export default function SearchPageClient() {
         <form
           onSubmit={handleSubmit}
           role="search"
-          className="w-full max-w-xl mx-auto mb-12 flex items-center gap-2"
+          className="relative w-full max-w-xl mx-auto mb-12 flex items-center gap-2"
         >
           <label htmlFor="search-page-input" className="sr-only">
             {t("placeholder")}
@@ -86,8 +103,15 @@ export default function SearchPageClient() {
           <input
             id="search-page-input"
             type="search"
+            autoComplete="off"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setTimeout(() => setIsInputFocused(false), 150)}
+            role="combobox"
+            aria-expanded={showSuggestions}
+            aria-autocomplete="list"
+            aria-controls="search-page-suggestions"
             placeholder={t("placeholder")}
             className={`w-full px-4 py-3 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-[#DD6B20] ${
               isDarkMode
@@ -101,6 +125,33 @@ export default function SearchPageClient() {
           >
             {t("searchButton")}
           </button>
+
+          {showSuggestions && (
+            <ul
+              id="search-page-suggestions"
+              role="listbox"
+              className={`absolute left-0 right-0 top-full mt-2 py-2 rounded-xl shadow-xl border overflow-hidden z-50 max-h-72 overflow-y-auto ${
+                isDarkMode ? "bg-[#2D3748] border-gray-700" : "bg-white border-gray-200"
+              }`}
+            >
+              {suggestions.map((subject) => (
+                <li key={subject.id} role="option" aria-selected="false">
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/subject/${subject.id}`)}
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-2 text-left text-sm transition-colors ${
+                      isDarkMode ? "text-gray-100 hover:bg-white/5" : "text-gray-800 hover:bg-orange-50"
+                    }`}
+                  >
+                    <span className="font-medium truncate">{tSubjects(`subjects.${subject.id}`)}</span>
+                    <span className="shrink-0 text-[10px] font-bold text-[#DD6B20] bg-orange-500/10 px-2 py-0.5 rounded-full border border-orange-500/30">
+                      {subject.level === "OL" ? "O/L" : "A/L"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </form>
 
         {/* States: empty query / no results / results grid */}
