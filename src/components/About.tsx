@@ -4,6 +4,7 @@ import React from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useTheme } from "@/context/ThemeContext";
+import FounderCard from "./FounderCard";
 
 export default function About() {
   const { isDarkMode } = useTheme();
@@ -98,6 +99,8 @@ export default function About() {
           </div>
 
         </div>
+
+        <FounderCard />
       </div>
     </section>
   );
