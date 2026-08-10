@@ -31,7 +31,8 @@ const SOCIAL_LINKS = [
   {
     name: "Portfolio",
     href: "https://hansithaekanayaka.com",
-    path: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm7.93 6h-3.18a15.4 15.4 0 0 0-1.41-4.05A8.03 8.03 0 0 1 19.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96H10.09c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.9 7.9 0 0 1 0-4h3.48c-.05.66-.08 1.33-.08 2s.03 1.34.08 2H4.26zm.81 2h3.18c.39 1.45.86 2.84 1.41 4.05a8.03 8.03 0 0 1-4.59-4.05zm3.18-8H5.07a8.03 8.03 0 0 1 4.59-4.05C9.2 5.16 8.73 6.55 8.25 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.05-.65-.06-1.32-.06-2s.01-1.35.06-2h4.68c.05.65.06 1.32.06 2s-.01 1.35-.06 2zm.31 5.95c.55-1.21 1.02-2.6 1.41-4.05h3.18a8.03 8.03 0 0 1-4.59 4.05zM16.26 10h3.18a8.03 8.03 0 0 0-4.59-4.05c.39 1.45.86 2.84 1.41 4.05z",  },
+    path: "M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm7.93 6h-3.18a15.4 15.4 0 0 0-1.41-4.05A8.03 8.03 0 0 1 19.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96H10.09c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14a7.9 7.9 0 0 1 0-4h3.48c-.05.66-.08 1.33-.08 2s.03 1.34.08 2H4.26zm.81 2h3.18c.39 1.45.86 2.84 1.41 4.05a8.03 8.03 0 0 1-4.59-4.05zm3.18-8H5.07a8.03 8.03 0 0 1 4.59-4.05C9.2 5.16 8.73 6.55 8.25 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.05-.65-.06-1.32-.06-2s.01-1.35.06-2h4.68c.05.65.06 1.32.06 2s-.01 1.35-.06 2zm.31 5.95c.55-1.21 1.02-2.6 1.41-4.05h3.18a8.03 8.03 0 0 1-4.59 4.05zM16.26 10h3.18a8.03 8.03 0 0 0-4.59-4.05c.39 1.45.86 2.84 1.41 4.05z",
+  },
 ];
 
 export default function FounderCard() {
@@ -52,6 +53,9 @@ export default function FounderCard() {
         </div>
 
         <div className="flex-1 text-center sm:text-left">
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#DD6B20] bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/30 uppercase tracking-wider mb-2">
+            {t("roleBadge")}
+          </span>
           <h3 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-[#1A365D]"}`}>
             {t("name")}
           </h3>
@@ -91,6 +95,9 @@ export default function FounderCard() {
               <Image src="/founder.jpg" alt={t("name")} fill sizes="112px" className="object-cover" />
             </div>
 
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#DD6B20] bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/30 uppercase tracking-wider mt-4">
+              {t("modalRole")}
+            </span>
             <h3 className={`text-2xl font-black mt-2 ${isDarkMode ? "text-white" : "text-[#1A365D]"}`}>
               {t("name")}
             </h3>
