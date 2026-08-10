@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ListObjectsV2Command, GetObjectCommand } from "@aws-sdk/client-s3";
-import { r2 } from "@/lib/r2";
+import { r2, getR2BucketName } from "@/lib/r2";
 
 // Serves the O/L / A/L exam timetable PDF from Cloudflare R2.
 //
@@ -23,6 +23,8 @@ import { r2 } from "@/lib/r2";
 // level yet (e.g. O/L timetable isn't out), this returns 404 with a
 // "not released" message instead of a broken download - the ExamTimetable
 // component shows that message inline rather than downloading a file.
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const level = searchParams.get("level");
@@ -40,18 +42,32 @@ export async function GET(request: Request) {
     let target: { Key?: string } | undefined;
 
     for (const prefix of candidatePrefixes) {
-      const listing = await r2.send(
-        new ListObjectsV2Command({
-          Bucket: process.env.R2_BUCKET_NAME,
-          Prefix: prefix,
-        })
-      );
+      let continuationToken: string | undefined;
+      const files: Array<{ Key?: string; Size?: number; LastModified?: Date }> = [];
 
-      // Skip "folder marker" entries (zero-byte objects some tools create for
-      // the folder itself) and pick the most recently uploaded real file.
-      const files = (listing.Contents || [])
-        .filter((item) => item.Key && !item.Key.endsWith("/") && (item.Size ?? 0) > 0)
-        .sort((a, b) => (b.LastModified?.getTime() ?? 0) - (a.LastModified?.getTime() ?? 0));
+      // A prefix can contain more than 1000 objects, so paginate here too.
+      do {
+        const listing = await r2.send(
+          new ListObjectsV2Command({
+            Bucket: getR2BucketName(),
+            Prefix: prefix,
+            ContinuationToken: continuationToken,
+          })
+        );
+
+        files.push(
+          ...(listing.Contents || []).filter(
+            (item) => item.Key && !item.Key.endsWith("/") && (item.Size ?? 0) > 0
+          )
+        );
+
+        continuationToken = listing.IsTruncated ? listing.NextContinuationToken : undefined;
+      } while (continuationToken);
+
+      // Skip folder markers and pick the most recently uploaded real file.
+      files.sort(
+        (a, b) => (b.LastModified?.getTime() ?? 0) - (a.LastModified?.getTime() ?? 0)
+      );
 
       if (files[0]?.Key) {
         target = files[0];
@@ -62,19 +78,22 @@ export async function GET(request: Request) {
     if (!target?.Key) {
       return NextResponse.json(
         { error: "not_released", message: `${level.toUpperCase()} timetable hasn't been released yet.` },
-        { status: 404 }
+        { status: 404, headers: { "Cache-Control": "no-store" } }
       );
     }
 
     const data = await r2.send(
       new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: getR2BucketName(),
         Key: target.Key,
       })
     );
 
     if (!data.Body) {
-      return NextResponse.json({ error: "not_released", message: "File not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "not_released", message: "File not found." },
+        { status: 404, headers: { "Cache-Control": "no-store" } }
+      );
     }
 
     const bytes = await data.Body.transformToByteArray();
@@ -91,8 +110,11 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error(`Timetable fetch error for level "${level}":`, error);
     return NextResponse.json(
-      { error: "not_released", message: `${level.toUpperCase()} timetable hasn't been released yet.` },
-      { status: 404 }
+      {
+        error: "storage_error",
+        message: "Unable to read the timetable from storage.",
+      },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
   }
 }

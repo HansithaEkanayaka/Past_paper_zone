@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { r2 } from "@/lib/r2";
+import { r2, getR2BucketName } from "@/lib/r2";
 import { createClient } from "@/lib/supabase/server";
 
 // Serves past-paper PDFs from Cloudflare R2 through our own domain instead of
 // exposing the raw R2 public URL. Also enforces login: a signed-out visitor
 // gets a 401 instead of the file, whether they're trying to preview or
 // download it.
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const subject = searchParams.get("subject");
@@ -36,7 +38,7 @@ export async function GET(request: Request) {
   try {
     const data = await r2.send(
       new GetObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: getR2BucketName(),
         Key: key,
       })
     );
@@ -58,6 +60,13 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error(`Paper fetch error for key "${key}":`, error);
-    return NextResponse.json({ error: "File not found" }, { status: 404 });
+
+    const message = error instanceof Error ? error.message : "Unknown R2 error";
+    const isMissing = /NoSuchKey|NotFound|NoSuchBucket|not found/i.test(message);
+
+    return NextResponse.json(
+      { error: isMissing ? "File not found" : "Unable to read the paper from storage" },
+      { status: isMissing ? 404 : 500, headers: { "Cache-Control": "no-store" } }
+    );
   }
 }
