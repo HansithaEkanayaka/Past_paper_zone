@@ -2,6 +2,7 @@
 
 import React, { useState, FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 
 export default function AdminLoginClient() {
@@ -46,8 +47,15 @@ export default function AdminLoginClient() {
     <div className="min-h-screen w-full bg-[#171923] text-white flex flex-col items-center justify-center px-4 font-sans">
       <div className="w-full max-w-sm bg-[#2D3748]/50 border border-gray-800 rounded-3xl p-8 shadow-xl">
         <div className="text-center mb-6">
-          <div className="inline-flex bg-[#DD6B20] text-white p-2 rounded-lg font-black text-xl tracking-wider mb-4">
-            PZ
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4">
+            <Image
+              src="/logo.png"
+              alt="PastPaperZone Logo"
+              width={64}
+              height={64}
+              className="object-contain max-h-full w-auto brightness-0 invert"
+              priority
+            />
           </div>
           <h1 className="text-xl font-extrabold">Admin Login</h1>
           <p className="text-xs text-gray-400 mt-1">

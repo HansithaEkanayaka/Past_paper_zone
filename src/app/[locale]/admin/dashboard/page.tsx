@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 
 export default function AdminDashboard() {
@@ -100,8 +101,15 @@ export default function AdminDashboard() {
       {/* Top Navigation Bar */}
       <header className="w-full bg-[#2D3748]/60 backdrop-blur border-b border-gray-800 px-4 sm:px-8 py-4 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-50">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="bg-[#DD6B20] text-white p-2 rounded-lg font-black text-xl tracking-wider shrink-0">
-            PZ
+          <div className="w-10 h-10 shrink-0 flex items-center justify-center">
+            <Image
+              src="/logo.png"
+              alt="PastPaperZone Logo"
+              width={40}
+              height={40}
+              className="object-contain max-h-full w-auto brightness-0 invert"
+              priority
+            />
           </div>
           <div className="min-w-0">
             <h1 className="text-lg sm:text-xl font-extrabold tracking-tight truncate">PastPaperZone</h1>
