@@ -25,7 +25,7 @@ export default function Hero({ totalPapers: initialPapers, totalSubjects: initia
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/stats");
+        const res = await fetch("/api/stats", { cache: "no-store" });
         const data = await res.json();
         if (data.success) {
           setStats({

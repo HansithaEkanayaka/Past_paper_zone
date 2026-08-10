@@ -1,32 +1,55 @@
 import { S3Client } from "@aws-sdk/client-s3";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-// Keep the R2 client configuration in one place. Cloudflare R2 is S3-compatible,
-// and the official AWS SDK configuration does not need a custom Node request
-// handler when running through OpenNext/Cloudflare Workers.
-const accountId = process.env.R2_ACCOUNT_ID;
-const accessKeyId = process.env.R2_ACCESS_KEY_ID;
-const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+// Cloudflare Worker R2 binding is the primary storage path in production.
+// The S3 client remains as a local-development fallback when the binding is
+// not available.
+export type R2ObjectLike = {
+  body: ReadableStream | null;
+  httpMetadata?: { contentType?: string };
+  size?: number;
+  uploaded?: Date;
+};
 
-if (!accountId || !accessKeyId || !secretAccessKey) {
-  console.warn(
-    "R2 environment variables are missing. Set R2_ACCOUNT_ID, R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY in the Cloudflare runtime environment."
-  );
+type R2BucketLike = {
+  get(key: string): Promise<R2ObjectLike | null>;
+  put(key: string, value: ArrayBuffer | Uint8Array | ReadableStream, options?: Record<string, unknown>): Promise<unknown>;
+  delete(key: string): Promise<void>;
+  list(options?: { prefix?: string; cursor?: string }): Promise<{
+    objects: Array<{ key: string; size: number; uploaded?: Date }>;
+    truncated: boolean;
+    cursor?: string;
+  }>;
+};
+
+export async function getR2Bucket(): Promise<R2BucketLike | null> {
+  try {
+    const { env } = await getCloudflareContext({ async: true });
+    return (env as unknown as { PAST_PAPERS_BUCKET?: R2BucketLike }).PAST_PAPERS_BUCKET ?? null;
+  } catch {
+    return null;
+  }
 }
 
-export const r2 = new S3Client({
-  region: "auto",
-  endpoint: accountId ? `https://${accountId}.r2.cloudflarestorage.com` : undefined,
-  credentials: {
-    accessKeyId: accessKeyId || "",
-    secretAccessKey: secretAccessKey || "",
-  },
-  maxAttempts: 3,
-});
+export function getR2S3Client() {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 
-export function getR2BucketName(): string {
-  const bucket = process.env.R2_BUCKET_NAME;
-  if (!bucket) {
-    throw new Error("R2_BUCKET_NAME is not configured");
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error("R2 S3 credentials are not configured.");
   }
+
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+    maxAttempts: 3,
+  });
+}
+
+export function getR2BucketName() {
+  const bucket = process.env.R2_BUCKET_NAME;
+  if (!bucket) throw new Error("R2_BUCKET_NAME is not configured.");
   return bucket;
 }

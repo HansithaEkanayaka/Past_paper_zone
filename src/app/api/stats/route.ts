@@ -1,69 +1,57 @@
 import { NextResponse } from "next/server";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { r2, getR2BucketName } from "@/lib/r2";
+import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET() {
   try {
-    const bucket = getR2BucketName();
+    const bucket = await getR2Bucket();
     const uniqueSubjects = new Set<string>();
     let totalPapers = 0;
-    let continuationToken: string | undefined;
 
-    // R2/S3 ListObjectsV2 returns at most 1000 objects per request.
-    // Keep requesting pages so the hero count stays correct as the site grows.
-    do {
-      const data = await r2.send(
-        new ListObjectsV2Command({
-          Bucket: bucket,
-          Prefix: "papers/",
-          ContinuationToken: continuationToken,
-        })
-      );
-
-      for (const item of data.Contents || []) {
-        if (!item.Key || item.Key.endsWith("/")) continue;
-
-        const parts = item.Key.split("/");
-        // Expected: papers/<subjectId>/<year>/<medium>/<type>.pdf
-        if (parts.length >= 2 && parts[1]) {
-          uniqueSubjects.add(parts[1]);
+    if (bucket) {
+      let cursor: string | undefined;
+      do {
+        const page = await bucket.list({ prefix: "papers/", cursor });
+        for (const item of page.objects) {
+          totalPapers += 1;
+          const parts = item.key.split("/");
+          if (parts[1]) uniqueSubjects.add(parts[1]);
         }
-
-        // Count actual paper objects, not folder markers.
-        totalPapers += 1;
-      }
-
-      continuationToken = data.IsTruncated ? data.NextContinuationToken : undefined;
-    } while (continuationToken);
+        cursor = page.truncated ? page.cursor : undefined;
+      } while (cursor);
+    } else {
+      // Local/non-Worker fallback.
+      const client = getR2S3Client();
+      let token: string | undefined;
+      do {
+        const page = await client.send(
+          new ListObjectsV2Command({
+            Bucket: getR2BucketName(),
+            Prefix: "papers/",
+            ContinuationToken: token,
+          })
+        );
+        for (const item of page.Contents ?? []) {
+          totalPapers += 1;
+          const parts = item.Key?.split("/") ?? [];
+          if (parts[1]) uniqueSubjects.add(parts[1]);
+        }
+        token = page.IsTruncated ? page.NextContinuationToken : undefined;
+      } while (token);
+    }
 
     return NextResponse.json(
-      {
-        success: true,
-        papersCount: totalPapers,
-        subjectsCount: uniqueSubjects.size,
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-      }
+      { success: true, papersCount: totalPapers, subjectsCount: uniqueSubjects.size },
+      { headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   } catch (error) {
     console.error("Stats API Error:", error);
-
     return NextResponse.json(
-      {
-        success: false,
-        papersCount: 0,
-        subjectsCount: 0,
-        error: error instanceof Error ? error.message : "Unable to read R2 statistics",
-      },
-      {
-        status: 500,
-        headers: { "Cache-Control": "no-store" },
-      }
+      { success: false, papersCount: 0, subjectsCount: 0, error: "Unable to read R2 statistics" },
+      { status: 500, headers: { "Cache-Control": "no-store, max-age=0" } }
     );
   }
 }

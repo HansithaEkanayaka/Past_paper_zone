@@ -1,71 +1,39 @@
-# Cloudflare deployment checklist
+# PastPaperZone – Cloudflare Workers deployment
 
-This project is a Next.js 16 app deployed with OpenNext to Cloudflare Workers.
+This project uses OpenNext + Cloudflare Workers and an R2 binding named `PAST_PAPERS_BUCKET`.
 
-## 1. Cloudflare environment variables
+## R2
+The Worker binding points to the existing bucket:
 
-Set these in the **Workers & Pages → your Worker → Settings → Variables and Secrets** area for the **production runtime**. If using Workers Builds, also make sure build-time variables/secrets are configured where Cloudflare asks for them.
+- Binding: `PAST_PAPERS_BUCKET`
+- Bucket: `past-papers`
 
-Required R2 values:
+The application uses the R2 binding in production. The AWS S3-compatible client is only a fallback for local development when the binding is unavailable.
 
-- `R2_ACCOUNT_ID`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
-- `R2_BUCKET_NAME`
+## Required Cloudflare variables/secrets
+Set these in the Worker environment:
 
-Also configure the existing application variables:
-
-- `NEXT_PUBLIC_R2_PUBLIC_URL`
-- `ADMIN_PASSWORD`
-- `ADMIN_SESSION_SECRET`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
 - `WEB3FORMS_ACCESS_KEY`
 
-Do not commit `.env.local` or real secrets. The supplied project now contains only `.env.example`.
+If you use the local S3 fallback, also set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, and `R2_BUCKET_NAME`.
 
-## 2. Build/deploy
-
-The project uses OpenNext. The package scripts are:
+## Deploy
 
 ```bash
-npm run build:worker
+npm install
 npm run deploy
 ```
 
-If using Cloudflare Workers Builds, use the equivalent OpenNext build/deploy configuration for your setup.
+Do not upload or commit `.env.local` containing real credentials.
 
-## 3. R2 object layout
+## Paper access rule
+Past-paper preview and download are protected twice:
 
-Past papers must use:
+1. The UI asks the visitor to log in before opening preview/download.
+2. `/api/paper` verifies the Supabase session server-side and returns `401` when the visitor is not logged in.
 
-```text
-papers/<subjectId>/<year>/<medium>/paper.pdf
-papers/<subjectId>/<year>/<medium>/marking.pdf
-```
-
-Examples:
-
-```text
-papers/ol-maths/2024/sinhala/paper.pdf
-papers/ol-maths/2024/sinhala/marking.pdf
-```
-
-Timetables must use:
-
-```text
-timetables/al/<filename>.pdf
-timetables/ol/<filename>.pdf
-```
-
-The bucket name is **not** part of the object key.
-
-## 4. What was fixed
-
-- Removed the custom request-handler object from the R2 S3 client; the official AWS SDK/R2 configuration is used.
-- Added R2 configuration validation.
-- Added pagination to the Hero statistics endpoint, so counts do not stop at 1000 files.
-- Added `force-dynamic` and `no-store` to storage APIs so counts/downloads are not served from stale cached responses.
-- Improved storage errors so a broken R2 configuration is not falsely reported as “timetable not released”.
-- Added pagination for timetable listing.
-- Updated the Worker compatibility date to one that supports `process.env` runtime variables.
+A/L and O/L timetable downloads remain public.

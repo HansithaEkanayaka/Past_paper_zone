@@ -1,72 +1,68 @@
 import { NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { r2, getR2BucketName } from "@/lib/r2";
+import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
 import { createClient } from "@/lib/supabase/server";
 
-// Serves past-paper PDFs from Cloudflare R2 through our own domain instead of
-// exposing the raw R2 public URL. Also enforces login: a signed-out visitor
-// gets a 401 instead of the file, whether they're trying to preview or
-// download it.
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const subject = searchParams.get("subject");
   const year = searchParams.get("year");
   const medium = searchParams.get("medium");
-  const type = searchParams.get("type"); // "paper" | "marking"
+  const type = searchParams.get("type");
   const action = searchParams.get("action") === "download" ? "download" : "view";
 
   if (!subject || !year || !medium || !type) {
     return NextResponse.json({ error: "Missing subject/year/medium/type" }, { status: 400 });
   }
 
+  // Server-side protection: preview and download both require a real Supabase session.
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
     return NextResponse.json(
-      { error: "Please log in to view or download this paper." },
-      { status: 401 }
+      { error: "login_required", message: "Please log in to view or download this paper." },
+      { status: 401, headers: { "Cache-Control": "no-store" } }
     );
   }
 
   const key = `papers/${subject}/${year}/${medium}/${type}.pdf`;
 
   try {
-    const data = await r2.send(
-      new GetObjectCommand({
-        Bucket: getR2BucketName(),
-        Key: key,
-      })
-    );
+    const bucket = await getR2Bucket();
+    let body: ReadableStream | null = null;
+    let contentType = "application/pdf";
 
-    if (!data.Body) {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    if (bucket) {
+      const object = await bucket.get(key);
+      if (!object?.body) {
+        return NextResponse.json({ error: "File not found" }, { status: 404 });
+      }
+      body = object.body;
+      contentType = object.httpMetadata?.contentType || contentType;
+    } else {
+      const data = await getR2S3Client().send(
+        new GetObjectCommand({ Bucket: getR2BucketName(), Key: key })
+      );
+      if (!data.Body) return NextResponse.json({ error: "File not found" }, { status: 404 });
+      body = data.Body.transformToWebStream();
+      contentType = data.ContentType || contentType;
     }
 
-    const bytes = await data.Body.transformToByteArray();
     const filename = `${subject}-${year}-${medium}-${type}.pdf`;
-
-    return new NextResponse(Buffer.from(bytes), {
+    return new Response(body, {
       status: 200,
       headers: {
-        "Content-Type": "application/pdf",
+        "Content-Type": contentType,
         "Content-Disposition": `${action === "download" ? "attachment" : "inline"}; filename="${filename}"`,
-        "Cache-Control": "private, max-age=0, no-store",
+        "Cache-Control": "private, no-store, max-age=0",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
     console.error(`Paper fetch error for key "${key}":`, error);
-
-    const message = error instanceof Error ? error.message : "Unknown R2 error";
-    const isMissing = /NoSuchKey|NotFound|NoSuchBucket|not found/i.test(message);
-
-    return NextResponse.json(
-      { error: isMissing ? "File not found" : "Unable to read the paper from storage" },
-      { status: isMissing ? 404 : 500, headers: { "Cache-Control": "no-store" } }
-    );
+    return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 }
