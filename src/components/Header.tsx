@@ -36,10 +36,12 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string>("");
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState<boolean>(false);
 
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const languages: Language[] = [
     { code: "si", label: "සිංහල" },
@@ -62,6 +64,19 @@ export default function Header() {
     if (langCode === currentLocale) return;
     router.replace(pathname, { locale: langCode });
   };
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (isMenuOpen || isLoginModalOpen) {
@@ -168,6 +183,7 @@ export default function Header() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setIsMenuOpen(false);
+        setIsUserDropdownOpen(false);
         return;
       }
 
@@ -218,9 +234,13 @@ export default function Header() {
     }
   };
 
+  const displayName = (user?.user_metadata?.full_name as string) || (user?.user_metadata?.name as string) || user?.email || "User";
+  const displayAvatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+
   return (
     <>
-      <header className="w-full font-sans sticky top-0 z-40 bg-transparent overflow-hidden">
+      {/* overflow-hidden ඉවත් කර ඇත, එවිට dropdown එක header එකෙන් පිටතට පෙන්විය හැක */}
+      <header className="w-full font-sans sticky top-0 z-50 bg-transparent">
         {/* Top row */}
         <div
           style={{
@@ -444,30 +464,75 @@ export default function Header() {
               </form>
 
               {user ? (
-                /* නම සහ ප්‍රොෆයිල් පින්තූරය පෙන්වන කොටස ක්ලික් කළ විට /profile වෙත යාමට සකස් කර ඇත[cite: 1] */
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2.5 bg-black/30 hover:bg-black/50 border border-gray-700/60 py-1 px-3 rounded-full transition-all group"
-                >
-                  {(user.user_metadata?.avatar_url || user.user_metadata?.picture) ? (
-                    <Image
-                      src={user.user_metadata.avatar_url || user.user_metadata.picture}
-                      alt=""
-                      width={28}
-                      height={28}
-                      className="w-7 h-7 rounded-full object-cover border border-[#DD6B20]"
-                    />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-[#DD6B20] text-white flex items-center justify-center font-bold text-xs shrink-0">
-                      {((user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email || "U")
-                        .charAt(0)
-                        .toUpperCase()}
+                /* Desktop User Profile Card Dropdown */
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    className="flex items-center gap-2.5 bg-black/30 hover:bg-black/50 border border-gray-700/60 py-1 px-3 rounded-full transition-all group outline-none focus:ring-2 focus:ring-[#DD6B20]"
+                  >
+                    {displayAvatar ? (
+                      <Image
+                        src={displayAvatar}
+                        alt=""
+                        width={28}
+                        height={28}
+                        className="w-7 h-7 rounded-full object-cover border border-[#DD6B20]"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-[#DD6B20] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                        {displayName.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="text-white text-xs lg:text-sm font-medium group-hover:text-[#DD6B20] transition-colors truncate max-w-[120px]">
+                      {displayName}
+                    </span>
+                  </button>
+
+                  {isUserDropdownOpen && (
+                    <div className="absolute right-0 mt-3 w-72 rounded-2xl shadow-2xl bg-white text-gray-900 border border-gray-200 py-3 px-4 z-50 animate-fadeIn">
+                      <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                        {displayAvatar ? (
+                          <Image
+                            src={displayAvatar}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-[#DD6B20]"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-[#DD6B20] text-white flex items-center justify-center font-bold text-base shrink-0">
+                            {displayName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 space-y-1">
+                        <Link
+                          href="/profile"
+                          onClick={() => setIsUserDropdownOpen(false)}
+                          className="block w-full text-left px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-orange-50 hover:text-[#DD6B20] rounded-xl transition-colors"
+                        >
+                          View Profile
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setIsUserDropdownOpen(false);
+                            await signOut();
+                          }}
+                          className="block w-full text-left px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                        >
+                          Log Out
+                        </button>
+                      </div>
                     </div>
                   )}
-                  <span className="text-white text-xs lg:text-sm font-medium group-hover:text-[#DD6B20] transition-colors truncate max-w-[120px]">
-                    {(user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email}
-                  </span>
-                </Link>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -620,9 +685,9 @@ export default function Header() {
                     onClick={() => setIsMenuOpen(false)}
                     className="flex items-center gap-2 min-w-0 group"
                   >
-                    {(user.user_metadata?.avatar_url || user.user_metadata?.picture) ? (
+                    {displayAvatar ? (
                       <Image
-                        src={user.user_metadata.avatar_url || user.user_metadata.picture}
+                        src={displayAvatar}
                         alt=""
                         width={36}
                         height={36}
@@ -630,13 +695,11 @@ export default function Header() {
                       />
                     ) : (
                       <div className="w-9 h-9 rounded-full bg-[#DD6B20] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                        {((user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email || "U")
-                          .charAt(0)
-                          .toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <span className="text-white text-sm font-semibold group-hover:text-[#DD6B20] transition-colors truncate">
-                      {(user.user_metadata?.full_name as string) || (user.user_metadata?.name as string) || user.email}
+                      {displayName}
                     </span>
                   </Link>
                   <button
