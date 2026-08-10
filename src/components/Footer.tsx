@@ -1,14 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useTheme } from "@/context/ThemeContext";
+import CookiePreferencesModal from "./CookiePreferencesModal";
 
 export default function Footer() {
   const { isDarkMode } = useTheme();
   const currentYear = new Date().getFullYear();
   const t = useTranslations("footer");
+  const [showCookieSettings, setShowCookieSettings] = useState(false);
 
   const resourcesLinks = [
     {
@@ -21,13 +23,15 @@ export default function Footer() {
     },
   ];
 
+  // "cookies" used to point at href="#" and did nothing when clicked - it's
+  // handled as a button below instead of a plain link so it can open the
+  // preferences modal.
   const siteLinks = [
     { label: t("site.about"), href: "/#about" },
     { label: t("site.contact"), href: "/contact" },
     { label: t("site.privacy"), href: "/privacy" },
     { label: t("site.terms"), href: "/terms" },
     { label: t("site.disclaimer"), href: "/disclaimer" },
-    { label: t("site.cookies"), href: "#" },
   ];
 
   return (
@@ -135,6 +139,15 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowCookieSettings(true)}
+                  className="text-sm text-gray-300 hover:text-white transition-colors text-left"
+                >
+                  {t("site.cookies")}
+                </button>
+              </li>
             </ul>
           </div>
 
@@ -174,11 +187,22 @@ export default function Footer() {
           </p>
           <p className="text-gray-400">
             Developed by{" "}
-            <span className="font-semibold text-gray-200">Hansitha Ekanayake</span>
+            <span className="font-semibold text-gray-200">Hansitha Ekanayaka</span>
           </p>
         </div>
 
       </div>
+
+      {showCookieSettings && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowCookieSettings(false)}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <CookiePreferencesModal onClose={() => setShowCookieSettings(false)} />
+          </div>
+        </div>
+      )}
     </footer>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 
 interface FormData {
   name: string;
@@ -10,6 +11,7 @@ interface FormData {
 }
 
 export default function ContactForm() {
+  const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -48,28 +50,41 @@ export default function ContactForm() {
     }
   };
 
+  const inputClasses = `w-full px-4 py-2.5 rounded-xl border outline-none transition-all text-sm ${
+    isDarkMode
+      ? 'bg-[#171923] border-gray-700 text-white placeholder-gray-500 focus:border-[#DD6B20]'
+      : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:border-[#DD6B20]'
+  }`;
+  const labelClasses = `block text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`;
+
   return (
-    <div className="max-w-xl mx-auto p-8 bg-slate-900/50 backdrop-blur-md rounded-2xl border border-slate-800 shadow-xl">
-      <h2 className="text-2xl font-bold text-white mb-2">Get in Touch</h2>
-      <p className="text-slate-400 mb-6 text-sm">
+    <div
+      className={`max-w-xl mx-auto p-8 rounded-2xl border shadow-xl transition-colors duration-300 ${
+        isDarkMode ? 'bg-[#2D3748] border-gray-700' : 'bg-white border-gray-200'
+      }`}
+    >
+      <h2 className={`text-2xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-[#1A365D]'}`}>
+        Get in Touch
+      </h2>
+      <p className={`mb-6 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
         Send a message and I'll get back to you as soon as possible.
       </p>
 
       {status === 'success' && (
-        <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg text-sm">
+        <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded-xl text-sm font-semibold">
           Message sent successfully!
         </div>
       )}
 
       {status === 'error' && (
-        <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-sm">
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 text-red-500 rounded-xl text-sm font-semibold">
           Something went wrong. Please try again later.
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="name" className="block text-xs font-medium text-slate-300 mb-1">
+          <label htmlFor="name" className={labelClasses}>
             Name
           </label>
           <input
@@ -80,12 +95,12 @@ export default function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             placeholder="Your Name"
-            className="w-full px-4 py-2.5 bg-slate-800/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
+            className={inputClasses}
           />
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-xs font-medium text-slate-300 mb-1">
+          <label htmlFor="email" className={labelClasses}>
             Email Address
           </label>
           <input
@@ -96,12 +111,12 @@ export default function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             placeholder="your.email@example.com"
-            className="w-full px-4 py-2.5 bg-slate-800/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
+            className={inputClasses}
           />
         </div>
 
         <div>
-          <label htmlFor="subject" className="block text-xs font-medium text-slate-300 mb-1">
+          <label htmlFor="subject" className={labelClasses}>
             Subject
           </label>
           <input
@@ -112,12 +127,12 @@ export default function ContactForm() {
             value={formData.subject}
             onChange={handleChange}
             placeholder="Project Inquiry / General Question"
-            className="w-full px-4 py-2.5 bg-slate-800/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm"
+            className={inputClasses}
           />
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-xs font-medium text-slate-300 mb-1">
+          <label htmlFor="message" className={labelClasses}>
             Message
           </label>
           <textarea
@@ -128,14 +143,14 @@ export default function ContactForm() {
             value={formData.message}
             onChange={handleChange}
             placeholder="Write your message here..."
-            className="w-full px-4 py-2.5 bg-slate-800/60 border border-slate-700/60 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-sm resize-none"
+            className={`${inputClasses} resize-none`}
           />
         </div>
 
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="w-full py-3 px-6 bg-[#DD6B20] hover:bg-orange-600 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           {status === 'loading' ? 'Sending...' : 'Send Message'}
         </button>

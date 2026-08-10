@@ -43,7 +43,18 @@
     "policyLink": "contact us",
     "policyAfter": "and we will act immediately.",
     "freeTitle": "How We Stay Free",
-    "freeText": "This website is supported entirely by Google AdSense advertisement revenue. Ads allow us to cover hosting costs and keep all resources permanently free for students. We are committed to maintaining a respectful, non-intrusive ad experience; deceptive, scammy, or inappropriate ads are never displayed."
+    "freeText": "This website is supported entirely by Google AdSense advertisement revenue. Ads allow us to cover hosting costs and keep all resources permanently free for students. We are committed to maintaining a respectful, non-intrusive ad experience; deceptive, scammy, or inappropriate ads are never displayed.",
+    "founder": {
+      "roleBadge": "Owner & Founder",
+      "name": "Hansitha Ekanayaka",
+      "shortDesc": "Supporting Sri Lankan O/L and A/L students with free, quality study resources.",
+      "moreButton": "More",
+      "modalRole": "Founder",
+      "bioTitle": "About the Founder",
+      "bio": "I am Hansitha Ekanayaka, a Computer Science undergraduate at the Informatics Institute of Technology and a passionate software developer. Driven by a commitment to making education accessible, I founded PastPaperZone to ensure that students have a reliable, free resource to support their academic journeys and preparation.",
+      "socialHeading": "Connect with me",
+      "closeLabel": "Close"
+    }
   },
   "footer": {
     "desc1": "Free study notes, past papers, and marking schemes for G.C.E. O/L and A/L students in Sri Lanka.",
@@ -353,5 +364,25 @@
     "sec4Text": "The content, branding, and features on PastPaperZone belong to us and are protected by international copyright laws.",
     "sec5Heading": "5. Contact Us",
     "sec5Text": "If you have any questions about these Terms, please contact us:"
+  },
+  "cookiePreferences": {
+    "badge": "Cookie Settings",
+    "title": "Cookie Preferences",
+    "intro": "We use cookies to make PastPaperZone work properly and to understand how the site is used. Choose which types of cookies you're okay with below.",
+    "necessaryTitle": "Necessary",
+    "necessaryDesc": "Required for the site to function (login sessions, saved theme/language, security). These can't be turned off.",
+    "analyticsTitle": "Analytics",
+    "analyticsDesc": "Helps us see which pages and papers are most used, so we know what to improve. No cookies are set unless you allow this.",
+    "marketingTitle": "Advertising",
+    "marketingDesc": "Used to show relevant ads and measure how they perform. This site is free thanks to ad revenue, but you can opt out of personalized ads here.",
+    "alwaysActive": "Always Active",
+    "saveButton": "Save Preferences",
+    "acceptAllButton": "Accept All",
+    "rejectAllButton": "Reject Non-Essential",
+    "closeLabel": "Close",
+    "bannerText": "We use cookies to improve your experience on this site. By continuing to browse, you agree to our use of cookies.",
+    "bannerAccept": "Accept All",
+    "bannerReject": "Reject Non-Essential",
+    "bannerCustomize": "Customize"
   }
 }

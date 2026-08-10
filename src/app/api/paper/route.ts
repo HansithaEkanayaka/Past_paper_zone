@@ -57,7 +57,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Paper fetch error:", error);
+    console.error(`Paper fetch error for key "${key}":`, error);
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 }
