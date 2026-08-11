@@ -206,7 +206,9 @@
     "previewButton": "Preview",
     "hidePreviewButton": "Hide Preview",
     "previewUnavailable": "Preview could not be loaded. Please use the download button instead.",
-    "previewNote": "If preview appears blank, this paper might not be uploaded yet — try 'Download' or use 'Request Missing Subject'."
+    "previewNote": "If preview appears blank, this paper might not be uploaded yet — try 'Download' or use 'Request Missing Subject'.",
+    "saveLabel": "Save Paper",
+    "savedLabel": "Saved"
   },
   "missingRequest": {
     "bannerTitle": "Missing a Subject or Paper you need?",
@@ -396,5 +398,15 @@
     "bannerAccept": "Accept All",
     "bannerReject": "Reject Non-Essential",
     "bannerCustomize": "Customize"
+  },
+  "trending": {
+    "title": "Trending Papers This Week",
+    "viewCount": "{count} views this week"
+  },
+  "savedPapers": {
+    "title": "Saved Papers",
+    "loading": "Loading...",
+    "empty": "You haven't saved any papers yet.",
+    "removeLabel": "Remove"
   }
 }

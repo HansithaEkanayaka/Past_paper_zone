@@ -4,6 +4,7 @@ import React from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProfileForm from "@/components/ProfileForm";
+import SavedPapers from "@/components/SavedPapers";
 import { Link } from "@/i18n/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -66,7 +67,10 @@ export default function ProfilePage() {
           // Location / About fields with a Save Changes button), so it
           // drops straight into the page - no `onClose` means no close
           // button, since there's nothing to dismiss on a full page.
-          <ProfileForm />
+          <>
+            <ProfileForm />
+            <SavedPapers />
+          </>
         )}
       </main>
 

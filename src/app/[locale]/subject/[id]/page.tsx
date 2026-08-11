@@ -13,6 +13,8 @@ import {
   Flag,
   X,
   Check,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 
 export default function SubjectDetailPage() {
@@ -51,6 +53,83 @@ export default function SubjectDetailPage() {
 
   const [showPreview, setShowPreview] = useState(false);
   const [previewFailed, setPreviewFailed] = useState(false);
+
+  // Saved / bookmarked papers for the logged-in user, loaded once so the
+  // bookmark button can show its current state without a request per click.
+  const [savedPapers, setSavedPapers] = useState<
+    { subject_id: string; year: string; medium: string; doc_type: string }[]
+  >([]);
+  const [savingPaper, setSavingPaper] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setSavedPapers([]);
+      return;
+    }
+    let cancelled = false;
+    fetch("/api/saved-papers", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data?.success) setSavedPapers(data.saved || []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const isPaperSaved =
+    !!selectedYear &&
+    savedPapers.some(
+      (p) =>
+        p.subject_id === subjectId &&
+        p.year === selectedYear &&
+        p.medium === selectedMedium &&
+        p.doc_type === docType
+    );
+
+  const toggleSavePaper = async () => {
+    if (requireLogin()) return;
+    if (!selectedYear || savingPaper) return;
+
+    setSavingPaper(true);
+    const payload = { subjectId, year: selectedYear, medium: selectedMedium, docType };
+
+    try {
+      if (isPaperSaved) {
+        await fetch("/api/saved-papers", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        setSavedPapers((prev) =>
+          prev.filter(
+            (p) =>
+              !(
+                p.subject_id === subjectId &&
+                p.year === selectedYear &&
+                p.medium === selectedMedium &&
+                p.doc_type === docType
+              )
+          )
+        );
+      } else {
+        await fetch("/api/saved-papers", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        setSavedPapers((prev) => [
+          ...prev,
+          { subject_id: subjectId, year: selectedYear, medium: selectedMedium, doc_type: docType },
+        ]);
+      }
+    } catch {
+      // Non-critical - the button just won't reflect the change; user can retry.
+    } finally {
+      setSavingPaper(false);
+    }
+  };
 
   // Report modal state
   const [showReport, setShowReport] = useState(false);
@@ -865,6 +944,37 @@ export default function SubjectDetailPage() {
                     >
                       <Share2 size={17} />
                       Share Paper
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={toggleSavePaper}
+                      disabled={savingPaper}
+                      className={`
+                        flex-1
+                        inline-flex
+                        items-center
+                        justify-center
+                        gap-2
+                        px-5
+                        py-3
+                        rounded-xl
+                        border
+                        font-bold
+                        text-sm
+                        transition-all
+                        disabled:opacity-60
+                        ${
+                          isPaperSaved
+                            ? "bg-[#DD6B20]/10 border-[#DD6B20] text-[#DD6B20]"
+                            : isDarkMode
+                            ? "bg-[#2D3748] border-gray-600 text-white hover:border-[#DD6B20] hover:text-[#DD6B20]"
+                            : "bg-white border-gray-300 text-[#1A365D] hover:border-[#DD6B20] hover:text-[#DD6B20]"
+                        }
+                      `}
+                    >
+                      {isPaperSaved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+                      {isPaperSaved ? t("savedLabel") : t("saveLabel")}
                     </button>
 
                     <button

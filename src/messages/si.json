@@ -206,7 +206,9 @@
     "previewButton": "පෙරදසුන",
     "hidePreviewButton": "පෙරදසුන සඟවන්න",
     "previewUnavailable": "පෙරදසුන පූරණය කළ නොහැක. කරුණාකර බාගත කිරීමේ බොත්තම උත්සාහ කරන්න.",
-    "previewNote": "පෙරදසුන හිස්ව පෙනේ නම්, මෙම ප්‍රශ්න පත්‍රය තවම උඩුගත කර නොතිබිය හැක — 'බාගත කරන්න' උත්සාහ කරන්න, නැතහොත් 'නොමැති විෂයයක් ඉල්ලන්න' භාවිතා කරන්න."
+    "previewNote": "පෙරදසුන හිස්ව පෙනේ නම්, මෙම ප්‍රශ්න පත්‍රය තවම උඩුගත කර නොතිබිය හැක — 'බාගත කරන්න' උත්සාහ කරන්න, නැතහොත් 'නොමැති විෂයයක් ඉල්ලන්න' භාවිතා කරන්න.",
+    "saveLabel": "Save කරන්න",
+    "savedLabel": "Saved"
   },
   "missingRequest": {
     "bannerTitle": "ඔබට අවශ්‍ය Subject එකක් හෝ Paper එකක් හිඟද?",
@@ -396,5 +398,15 @@
     "bannerAccept": "සියල්ල පිළිගන්න",
     "bannerReject": "අත්‍යවශ්‍ය නොවන ඒවා ප්‍රතික්ෂේප කරන්න",
     "bannerCustomize": "අභිරුචිකරණය කරන්න"
+  },
+  "trending": {
+    "title": "මේ සතියේ Trending Papers",
+    "viewCount": "මේ සතියේ views {count}"
+  },
+  "savedPapers": {
+    "title": "Save කරපු Papers",
+    "loading": "Loading...",
+    "empty": "ඔයා තාම paper එකක්වත් save කරලා නෑ.",
+    "removeLabel": "ඉවත් කරන්න"
   }
 }
