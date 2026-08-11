@@ -22,6 +22,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock3,
+  ChevronLeft,
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import styles from "./page.module.css";
@@ -300,7 +301,7 @@ export default function AdminDashboard() {
 
         <div className={styles.sidebarBottom}>
           <a href="/" className={styles.backLink}>
-            <ChevronRight size={16} /> Back to website
+            <ChevronLeft size={16} /> Back to website
           </a>
           <button onClick={handleLogout} disabled={loggingOut} className={styles.logout}>
             <LogOut size={16} />
