@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import BackToTopButton from "@/components/BackToTopButton";
 import CookieBanner from "@/components/CookieBanner";
+import ActivityTracker from "@/components/ActivityTracker";
 import "@/app/globals.css";
 
 // Brand fonts (Baloo 2 for headings/logo, Nunito for body text) are loaded
@@ -39,6 +40,7 @@ export default async function LocaleLayout({
           </div>
           <BackToTopButton />
           <CookieBanner />
+          <ActivityTracker />
         </AuthProvider>
       </ThemeProvider>
     </NextIntlClientProvider>

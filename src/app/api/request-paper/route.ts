@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendSiteEmail } from "@/lib/email";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +13,19 @@ export async function POST(request: Request) {
     console.log(`Subject: ${subject}`);
     console.log(`Topic: ${topic}`);
     console.log(`Message: ${message}`);
+
+    try {
+      const { error } = await createAdminClient().from("paper_requests").insert({
+        name: name || null,
+        email: email || null,
+        subject: subject || null,
+        topic: topic || null,
+        message: message || null,
+      });
+      if (error) console.error("Paper request database error:", error);
+    } catch (dbError) {
+      console.error("Paper request database error:", dbError);
+    }
 
     await sendSiteEmail({
       subject: `[PastPaperZone] Missing Paper Request: ${subject || "Untitled"}`,

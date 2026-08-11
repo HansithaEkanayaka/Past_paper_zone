@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -49,6 +50,23 @@ export async function GET(request: Request) {
       if (!data.Body) return NextResponse.json({ error: "File not found" }, { status: 404 });
       body = data.Body.transformToWebStream();
       contentType = data.ContentType || contentType;
+    }
+
+    // Record paper demand after the file has been found successfully.
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await createAdminClient().from("paper_activity").insert({
+        action: action === "download" ? "download" : "view",
+        subject_id: subject,
+        year,
+        medium,
+        doc_type: type,
+        user_id: user?.id || null,
+        visitor_id: request.headers.get("x-visitor-id") || null,
+      });
+    } catch (activityError) {
+      // Analytics must never prevent a valid paper from being served.
+      console.error("Paper activity log error:", activityError);
     }
 
     const filename = `${subject}-${year}-${medium}-${type}.pdf`;
