@@ -9,6 +9,7 @@ import PomodoroTimer from "@/components/PomodoroTimer";
 import About from "@/components/About";
 import FeedbackForm from "@/components/FeedbackForm";
 import Footer from "@/components/Footer";
+import SocialChannelButtons from "@/components/SocialChannelButtons";
 
 export default function Home() {
   return (
@@ -24,6 +25,7 @@ export default function Home() {
       <About />
       <FeedbackForm />
       <Footer />
+      <SocialChannelButtons />
     </main>
   );
 }

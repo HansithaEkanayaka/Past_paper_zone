@@ -21,7 +21,7 @@ import { WATERMARK_LOGO_BASE64 } from "./watermarkAssets";
  */
 
 const SITE_URL = "https://www.pastpaperzone.lk";
-const BRAND_TEXT = "සියලුම විෂයන්ට අදාල ප්‍රශ්න පත්‍ර/පිළිතුරු පත්‍ර ලබා ගැනීමට www.pastpaperzone.lk වෙත පිවිසෙන්න";
+const BRAND_TEXT = "Downloaded from: www.pastpaperzone.lk";
 
 // Brand text color
 const BRAND_COLOR = rgb(0.145, 0.4, 0.68);

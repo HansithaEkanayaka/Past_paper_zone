@@ -47,6 +47,93 @@ body {
   font-weight: 700;
 }
 
+
+/* Noticeable but smooth attention effect for the floating social-channel buttons.
+   The button gently grows/shrinks, then gives a tiny double wiggle before resting.
+   A second pulsing ring makes the effect visible even on dark backgrounds. */
+@keyframes socialChannelBreath {
+  0%,
+  62%,
+  100% {
+    transform: scale(1) translate3d(0, 0, 0);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  }
+  12% {
+    transform: scale(1.09) translate3d(0, -1px, 0);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.32);
+  }
+  24% {
+    transform: scale(1.035) translate3d(0, 0, 0);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  }
+  32% {
+    transform: scale(1.035) translate3d(-2px, 0, 0) rotate(-1deg);
+  }
+  37% {
+    transform: scale(1.035) translate3d(2px, 0, 0) rotate(1deg);
+  }
+  42% {
+    transform: scale(1.035) translate3d(-1px, 0, 0) rotate(-0.5deg);
+  }
+  47% {
+    transform: scale(1.035) translate3d(0, 0, 0);
+  }
+}
+
+@keyframes socialChannelRing {
+  0%,
+  62%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  12% {
+    opacity: 0.55;
+    transform: scale(1.08);
+  }
+  35% {
+    opacity: 0.2;
+    transform: scale(1.18);
+  }
+  55% {
+    opacity: 0;
+    transform: scale(1.28);
+  }
+}
+
+.social-channel-button {
+  isolation: isolate;
+  animation: socialChannelBreath 3.2s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+
+.social-channel-button::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  border: 3px solid currentColor;
+  border-radius: 9999px;
+  opacity: 0;
+  pointer-events: none;
+  animation: socialChannelRing 3.2s ease-out infinite;
+}
+
+.social-channel-button:hover {
+  animation-play-state: paused;
+}
+
+.social-channel-button:hover::before {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .social-channel-button,
+  .social-channel-button::before {
+    animation: none;
+  }
+}
+
 /* Generic fade-in used across modals/step transitions. */
 @keyframes fadeIn {
   from {
