@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   BarChart3,
   BookOpen,
@@ -301,9 +302,9 @@ export default function AdminDashboard() {
         </nav>
 
         <div className={styles.sidebarBottom}>
-          <a href="/" className={styles.backLink}>
+          <Link href="/" className={styles.backLink}>
             <ChevronLeft size={16} /> Back to website
-          </a>
+          </Link>
           <button onClick={handleLogout} disabled={loggingOut} className={styles.logout}>
             <LogOut size={16} />
             {loggingOut ? "Logging out..." : "Logout"}

@@ -200,7 +200,7 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
             <h2 className="text-xl font-extrabold">Report this paper</h2>
             <p className="text-sm opacity-70 mt-1">{year} • {subjectName} • {mediumNames[medium]}</p>
             <select value={reason} onChange={(e) => setReason(e.target.value)} className="w-full mt-5 rounded-xl border p-3 bg-transparent">
-              <option>PDF doesn't open</option>
+              <option>PDF doesn&apos;t open</option>
               <option>Wrong paper</option>
               <option>Missing pages</option>
               <option>Wrong marking scheme</option>

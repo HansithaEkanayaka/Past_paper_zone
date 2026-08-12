@@ -67,7 +67,7 @@ export default function ContactForm() {
         Get in Touch
       </h2>
       <p className={`mb-6 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-        Send a message and I'll get back to you as soon as possible.
+        Send a message and I&apos;ll get back to you as soon as possible.
       </p>
 
       {status === 'success' && (

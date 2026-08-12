@@ -56,8 +56,8 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  runtime: "experimental-edge",
   matcher: [
-    // api, _next, static files, sitemap.xml සහ robots.txt middleware එකෙන් bypass කිරීම
-    '/((?!api|_next|_vercel|.*\\..*|sitemap\\.xml|robots\\.txt).*)',
+    "/((?!api|_next|_vercel|.*\\..*|sitemap\\.xml|robots\\.txt).*)",
   ],
 };

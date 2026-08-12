@@ -18,7 +18,7 @@
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",
     "lucide-react": "^1.28.0",
-    "next": "16.3.0",
+    "next": "^15.5.22",
     "next-intl": "^4.13.5",
     "pdf-lib": "^1.17.1",
     "react": "19.2.8",
@@ -26,12 +26,13 @@
     "resend": "^6.18.1"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.0",
+    "eslint-config-next": "^15.5.22",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.120.0"

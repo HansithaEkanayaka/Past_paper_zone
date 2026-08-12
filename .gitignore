@@ -35,12 +35,12 @@ next-env.d.ts
 .idea/
 .DS_Store
 Thumbs.db
-package-lock.json
-
-package-lock.json
 
 .open-next/
 .next/
 out/
 dist/
 build/
+
+
+.wrangler/
