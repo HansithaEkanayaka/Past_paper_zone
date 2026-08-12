@@ -1,120 +1,96 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Download, Eye, TrendingUp } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
 import { useTheme } from "@/context/ThemeContext";
-import { TrendingUp, Eye } from "lucide-react";
-import { ALL_SUBJECTS } from "@/lib/subjects";
+import { useTranslations } from "next-intl";
 
-interface TrendingItem {
+type TrendingPaper = {
   subjectId: string;
   year: string;
   medium: string;
-  count: number;
-}
-
-const mediumTagKey: Record<string, string> = {
-  sinhala: "tagSinhala",
-  english: "tagEnglish",
-  tamil: "tagTamil",
+  docType: string;
+  views: number;
+  downloads: number;
+  score: number;
 };
 
 export default function TrendingPapers() {
   const { isDarkMode } = useTheme();
-  const t = useTranslations("trending");
-  const tSubjects = useTranslations("SubjectCard");
-  const tDetail = useTranslations("subjectDetail");
-
-  const [items, setItems] = useState<TrendingItem[] | null>(null);
+  const t = useTranslations("SubjectCard");
+  const [papers, setPapers] = useState<TrendingPaper[]>([]);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/trending", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled && data?.success) setItems(data.trending || []);
-      })
-      .catch(() => {
-        if (!cancelled) setItems([]);
-      });
-    return () => {
-      cancelled = true;
-    };
+    fetch("/api/trending-papers", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setPapers(data?.papers || []))
+      .catch(() => setPapers([]));
   }, []);
 
-  // Nothing yet (analytics table just created, or genuinely quiet week) -
-  // hide the whole section rather than show an awkward empty state.
-  if (items && items.length === 0) return null;
+  if (!papers.length) return null;
+
+  const mediumLabel = (medium: string) =>
+    medium === "sinhala" ? "Sinhala" : medium === "tamil" ? "Tamil" : "English";
+
+  const subjectLabel = (id: string) => {
+    try {
+      return t(`subjects.${id}`);
+    } catch {
+      return id;
+    }
+  };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex items-center gap-2 mb-6">
-        <TrendingUp className="text-[#DD6B20]" size={22} />
-        <h2
-          className={`text-xl sm:text-2xl font-bold ${
-            isDarkMode ? "text-white" : "text-[#1A365D]"
-          }`}
-        >
-          {t("title")}
-        </h2>
-      </div>
-
-      {!items ? (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-24 rounded-xl animate-pulse ${
-                isDarkMode ? "bg-[#2D3748]" : "bg-gray-100"
-              }`}
-            />
-          ))}
+    <section
+      className={`w-full py-12 px-4 md:px-8 border-y ${
+        isDarkMode ? "bg-[#171923] border-gray-800" : "bg-gray-50 border-gray-100"
+      }`}
+    >
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <div>
+            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#DD6B20]">
+              <TrendingUp size={15} /> Trending this week
+            </span>
+            <h2 className={`text-2xl md:text-3xl font-extrabold mt-2 ${isDarkMode ? "text-white" : "text-[#1A365D]"}`}>
+              Most downloaded papers
+            </h2>
+          </div>
+          <Link href="/#subjects-section" className="text-sm font-bold text-[#DD6B20] hover:underline">
+            Browse all
+          </Link>
         </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {items.map((item) => {
-            const subjectMeta = ALL_SUBJECTS.find((s) => s.id === item.subjectId);
-            const subjectName = subjectMeta
-              ? tSubjects(`subjects.${item.subjectId}`)
-              : item.subjectId;
-            const mediumLabel = mediumTagKey[item.medium]
-              ? tDetail(mediumTagKey[item.medium])
-              : item.medium;
 
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {papers.map((paper) => {
+            const level = paper.subjectId.startsWith("al") ? "al" : "ol";
             return (
               <Link
-                key={`${item.subjectId}-${item.year}-${item.medium}`}
-                href={`/subject/${item.subjectId}`}
-                className={`group rounded-xl border p-4 transition-all duration-200 hover:shadow-md ${
+                key={`${paper.subjectId}-${paper.year}-${paper.medium}-${paper.docType}`}
+                href={`/papers/${level}/${paper.subjectId}/${paper.year}/${paper.medium}`}
+                className={`rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${
                   isDarkMode
-                    ? "bg-[#2D3748] border-gray-700 hover:border-[#DD6B20]"
-                    : "bg-white border-gray-200 hover:border-[#DD6B20]"
+                    ? "bg-[#2D3748] border-gray-700 text-white"
+                    : "bg-white border-gray-200 text-gray-900"
                 }`}
               >
-                <p
-                  className={`text-sm font-bold truncate ${
-                    isDarkMode ? "text-white" : "text-[#1A365D]"
-                  } group-hover:text-[#DD6B20]`}
-                >
-                  {subjectName}
+                <div className="text-xs font-bold text-[#DD6B20] uppercase">
+                  {paper.docType === "marking" ? "Marking Scheme" : "Question Paper"}
+                </div>
+                <h3 className="font-extrabold text-lg mt-2 leading-snug">{subjectLabel(paper.subjectId)}</h3>
+                <p className="text-sm opacity-70 mt-1">
+                  {paper.year} • {mediumLabel(paper.medium)}
                 </p>
-                <p className={`text-xs mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                  {item.year} &middot; {mediumLabel}
-                </p>
-                <div
-                  className={`flex items-center gap-1 mt-3 text-xs font-medium ${
-                    isDarkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  <Eye size={13} />
-                  <span>{t("viewCount", { count: item.count })}</span>
+                <div className="flex items-center gap-4 mt-4 text-xs font-semibold opacity-75">
+                  <span className="inline-flex items-center gap-1"><Download size={14} /> {paper.downloads}</span>
+                  <span className="inline-flex items-center gap-1"><Eye size={14} /> {paper.views}</span>
                 </div>
               </Link>
             );
           })}
         </div>
-      )}
+      </div>
     </section>
   );
 }

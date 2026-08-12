@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    await sendSiteEmail({
+    const emailResult = await sendSiteEmail({
       subject: `[PastPaperZone] Contact Form: ${subject || "New message"}`,
       replyTo: email,
       html: `
@@ -21,6 +21,10 @@ export async function POST(request: Request) {
         <p><strong>Message:</strong><br/>${(message || "").replace(/\n/g, "<br/>")}</p>
       `,
     });
+
+    if (!emailResult.sent) {
+      return NextResponse.json({ error: "Email service is not configured or rejected the message." }, { status: 502 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

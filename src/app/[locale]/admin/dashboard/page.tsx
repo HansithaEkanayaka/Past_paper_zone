@@ -67,6 +67,7 @@ type TopPaper = {
 const nav = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "papers", label: "Papers", icon: BookOpen },
+  { id: "reports", label: "Reports", icon: Flag },
   { id: "users", label: "Users", icon: Users },
   { id: "requests", label: "Requests", icon: MessageSquarePlus },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
@@ -291,7 +292,7 @@ export default function AdminDashboard() {
               >
                 <Icon size={19} />
                 <span>{item.label}</span>
-                {item.id === "papers" && reports.length > 0 && (
+                {item.id === "reports" && reports.length > 0 && (
                   <span className={styles.badge}>{reports.length}</span>
                 )}
               </button>
@@ -457,31 +458,34 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className={styles.card}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <h2>Reported Papers</h2>
-                    <p>Review user-submitted paper problems</p>
-                  </div>
-                  <span className={styles.pendingBadge}>{reports.length} pending</span>
-                </div>
+            </div>
+          )}
 
-                <div className={styles.reportList}>
-                  {reports.map((report) => (
-                    <div key={report.id} className={styles.fullReport}>
-                      <div>
-                        <strong>{report.subject_id} {report.year} • {report.medium}</strong>
-                        <span>{report.reason}</span>
-                        {report.details && <p>{report.details}</p>}
-                      </div>
-                      <div className={styles.reportActions}>
-                        <button onClick={() => updateReport(report.id, "resolved")} className={styles.resolve}><CheckCircle2 size={15} /> Resolve</button>
-                        <button onClick={() => updateReport(report.id, "dismissed")} className={styles.dismiss}><X size={15} /> Dismiss</button>
-                      </div>
-                    </div>
-                  ))}
-                  {!reports.length && <Empty text="No pending reports." />}
+          {section === "reports" && (
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div>
+                  <h2>Reported Papers</h2>
+                  <p>Review user-submitted paper problems</p>
                 </div>
+                <span className={styles.pendingBadge}>{reports.length} pending</span>
+              </div>
+
+              <div className={styles.reportList}>
+                {reports.map((report) => (
+                  <div key={report.id} className={styles.fullReport}>
+                    <div>
+                      <strong>{report.subject_id} {report.year} • {report.medium}</strong>
+                      <span>{report.reason}</span>
+                      {report.details && <p>{report.details}</p>}
+                    </div>
+                    <div className={styles.reportActions}>
+                      <button onClick={() => updateReport(report.id, "resolved")} className={styles.resolve}><CheckCircle2 size={15} /> Resolve</button>
+                      <button onClick={() => updateReport(report.id, "dismissed")} className={styles.dismiss}><X size={15} /> Dismiss</button>
+                    </div>
+                  </div>
+                ))}
+                {!reports.length && <Empty text="No pending reports." />}
               </div>
             </div>
           )}

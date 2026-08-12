@@ -7,8 +7,15 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 function startOfDay(daysAgo = 0) {
-  const d = new Date();
-  d.setUTCHours(0, 0, 0, 0);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const d = new Date(`${values.year}-${values.month}-${values.day}T00:00:00+05:30`);
   d.setUTCDate(d.getUTCDate() - daysAgo);
   return d.toISOString();
 }
@@ -56,9 +63,13 @@ export async function GET() {
     };
 
     const errors = [visits, views, downloads, signups, topDownloads, topViews, reports, requests, contributions]
-      .filter((r) => r.error && r.error.code !== "PGRST116");
+      .filter((r) => r.error);
     if (errors.length) {
       console.error("Analytics query error:", errors.map((r) => r.error));
+      return NextResponse.json(
+        { error: "Analytics data could not be loaded. Check the Supabase tables and service-role key." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({

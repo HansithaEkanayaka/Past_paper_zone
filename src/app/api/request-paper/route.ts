@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       console.error("Paper request database error:", dbError);
     }
 
-    await sendSiteEmail({
+    const emailResult = await sendSiteEmail({
       subject: `[PastPaperZone] Missing Paper Request: ${subject || "Untitled"}`,
       replyTo: email,
       html: `
@@ -39,6 +39,10 @@ export async function POST(request: Request) {
         <p><strong>Message:</strong><br/>${(message || "").replace(/\n/g, "<br/>")}</p>
       `,
     });
+
+    if (!emailResult.sent) {
+      return NextResponse.json({ error: "Email service is not configured or rejected the request." }, { status: 502 });
+    }
 
     return NextResponse.json({ success: true, message: "Request received" });
   } catch (error) {

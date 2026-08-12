@@ -10,7 +10,7 @@ const intlMiddleware = createMiddleware(routing);
 // (e.g. "/admin/dashboard", "/en/admin/dashboard", "/si/admin/dashboard/...").
 const ADMIN_DASHBOARD_PATTERN = /^\/(?:(?:en|si|ta)\/)?admin\/dashboard(?:\/|$)/;
 
-export default async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // 0. Gate the admin dashboard before anything else runs. Previously the
   // dashboard page itself had no server-side check at all - only the
   // upload/delete API calls it makes were protected - so the page (its

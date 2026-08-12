@@ -3,97 +3,122 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
-}
+const validMediums = new Set(["sinhala", "english", "tamil"]);
+const validDocTypes = new Set(["paper", "marking"]);
 
-// List the current user's saved papers (used by the profile page).
-export async function GET() {
-  const user = await requireUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+function validatePaper(input: Record<string, unknown>) {
+  const subjectId = String(input.subjectId || "").trim();
+  const year = String(input.year || "").trim();
+  const medium = String(input.medium || "").trim();
+  const docType = String(input.docType || "").trim();
 
-  const { data, error } = await createAdminClient()
-    .from("saved_papers")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Saved papers list error:", error);
-    return NextResponse.json({ error: "Unable to load saved papers" }, { status: 500 });
+  if (!subjectId || !year || !validMediums.has(medium) || !validDocTypes.has(docType)) {
+    return null;
   }
 
-  return NextResponse.json({ success: true, saved: data || [] });
+  return { subjectId, year, medium, docType };
 }
 
-// Save a paper (bookmark button on the subject page).
-export async function POST(request: Request) {
-  const user = await requireUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
+export async function GET() {
   try {
-    const { subjectId, year, medium, docType } = await request.json();
-    if (!subjectId || !year || !medium || !docType) {
-      return NextResponse.json({ error: "Missing paper details" }, { status: 400 });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "login_required" }, { status: 401 });
     }
 
-    const { error } = await createAdminClient().from("saved_papers").upsert(
-      {
-        user_id: user.id,
-        subject_id: String(subjectId),
-        year: String(year),
-        medium: String(medium),
-        doc_type: String(docType),
-      },
-      { onConflict: "user_id,subject_id,year,medium,doc_type", ignoreDuplicates: true }
-    );
+    const { data, error } = await createAdminClient()
+      .from("saved_papers")
+      .select("id, subject_id, year, medium, doc_type, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Save paper error:", error);
+      console.error("Saved papers fetch error:", error);
+      return NextResponse.json({ error: "Unable to load saved papers" }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, papers: data || [] });
+  } catch (error) {
+    console.error("Saved papers GET error:", error);
+    return NextResponse.json({ error: "Unable to load saved papers" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "login_required" }, { status: 401 });
+    }
+
+    const paper = validatePaper(await request.json());
+    if (!paper) {
+      return NextResponse.json({ error: "Invalid paper" }, { status: 400 });
+    }
+
+    const { data, error } = await createAdminClient()
+      .from("saved_papers")
+      .upsert(
+        {
+          user_id: user.id,
+          subject_id: paper.subjectId,
+          year: paper.year,
+          medium: paper.medium,
+          doc_type: paper.docType,
+        },
+        { onConflict: "user_id,subject_id,year,medium,doc_type" }
+      )
+      .select("id, subject_id, year, medium, doc_type, created_at")
+      .single();
+
+    if (error) {
+      console.error("Saved paper insert error:", error);
       return NextResponse.json({ error: "Unable to save paper" }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, paper: data });
   } catch (error) {
-    console.error("Save paper API error:", error);
+    console.error("Saved papers POST error:", error);
     return NextResponse.json({ error: "Unable to save paper" }, { status: 500 });
   }
 }
 
-// Remove a saved paper (unsave button on subject page or profile list).
 export async function DELETE(request: Request) {
-  const user = await requireUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   try {
-    const { subjectId, year, medium, docType } = await request.json();
-    if (!subjectId || !year || !medium || !docType) {
-      return NextResponse.json({ error: "Missing paper details" }, { status: 400 });
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "login_required" }, { status: 401 });
+    }
+
+    const paper = validatePaper(await request.json());
+    if (!paper) {
+      return NextResponse.json({ error: "Invalid paper" }, { status: 400 });
     }
 
     const { error } = await createAdminClient()
       .from("saved_papers")
       .delete()
       .eq("user_id", user.id)
-      .eq("subject_id", String(subjectId))
-      .eq("year", String(year))
-      .eq("medium", String(medium))
-      .eq("doc_type", String(docType));
+      .eq("subject_id", paper.subjectId)
+      .eq("year", paper.year)
+      .eq("medium", paper.medium)
+      .eq("doc_type", paper.docType);
 
     if (error) {
-      console.error("Unsave paper error:", error);
+      console.error("Saved paper delete error:", error);
       return NextResponse.json({ error: "Unable to remove saved paper" }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Unsave paper API error:", error);
+    console.error("Saved papers DELETE error:", error);
     return NextResponse.json({ error: "Unable to remove saved paper" }, { status: 500 });
   }
 }

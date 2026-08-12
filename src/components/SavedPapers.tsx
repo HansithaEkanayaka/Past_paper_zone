@@ -1,143 +1,90 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Bookmark, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
-import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { Bookmark, X } from "lucide-react";
-import { ALL_SUBJECTS } from "@/lib/subjects";
+import { useTranslations } from "next-intl";
 
-interface SavedPaper {
-  id: string;
+type SavedPaper = {
+  id: number;
   subject_id: string;
   year: string;
   medium: string;
   doc_type: string;
-}
-
-const mediumTagKey: Record<string, string> = {
-  sinhala: "tagSinhala",
-  english: "tagEnglish",
-  tamil: "tagTamil",
 };
 
 export default function SavedPapers() {
-  const { user } = useAuth();
   const { isDarkMode } = useTheme();
-  const t = useTranslations("savedPapers");
-  const tSubjects = useTranslations("SubjectCard");
-  const tDetail = useTranslations("subjectDetail");
+  const t = useTranslations("SubjectCard");
+  const [papers, setPapers] = useState<SavedPaper[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [items, setItems] = useState<SavedPaper[] | null>(null);
-  const [removingId, setRemovingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    fetch("/api/saved-papers", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled && data?.success) setItems(data.saved || []);
-      })
-      .catch(() => {
-        if (!cancelled) setItems([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-  const removeSaved = async (item: SavedPaper) => {
-    setRemovingId(item.id);
+  const load = async () => {
+    setLoading(true);
     try {
-      await fetch("/api/saved-papers", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          subjectId: item.subject_id,
-          year: item.year,
-          medium: item.medium,
-          docType: item.doc_type,
-        }),
-      });
-      setItems((prev) => (prev || []).filter((p) => p.id !== item.id));
-    } catch {
-      // Non-critical - leave the item in place, user can retry.
+      const res = await fetch("/api/saved-papers", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setPapers(data.papers || []);
+      }
     } finally {
-      setRemovingId(null);
+      setLoading(false);
     }
   };
 
-  if (!user) return null;
+  useEffect(() => { load(); }, []);
+
+  const remove = async (paper: SavedPaper) => {
+    const res = await fetch("/api/saved-papers", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subjectId: paper.subject_id,
+        year: paper.year,
+        medium: paper.medium,
+        docType: paper.doc_type,
+      }),
+    });
+    if (res.ok) setPapers((current) => current.filter((item) => item.id !== paper.id));
+  };
+
+  const subjectName = (id: string) => {
+    try { return t(`subjects.${id}`); } catch { return id; }
+  };
+
+  if (loading) return <p className="text-sm opacity-70">Loading saved papers...</p>;
 
   return (
-    <div
-      className={`mt-8 rounded-2xl border p-6 sm:p-8 ${
-        isDarkMode ? "bg-[#2D3748] border-gray-700" : "bg-white border-gray-200"
-      }`}
-    >
+    <section className={`mt-8 rounded-2xl border p-6 ${isDarkMode ? "bg-[#2D3748] border-gray-700" : "bg-white border-gray-200"}`}>
       <div className="flex items-center gap-2 mb-5">
-        <Bookmark className="text-[#DD6B20]" size={20} />
-        <h2 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-[#1A365D]"}`}>
-          {t("title")}
-        </h2>
+        <Bookmark size={19} className="text-[#DD6B20]" />
+        <div>
+          <h2 className="text-xl font-extrabold">Saved Papers</h2>
+          <p className="text-sm opacity-70">Your bookmarked papers in one place.</p>
+        </div>
       </div>
 
-      {!items ? (
-        <p className="text-sm opacity-70">{t("loading")}</p>
-      ) : items.length === 0 ? (
-        <p className="text-sm opacity-70">{t("empty")}</p>
+      {!papers.length ? (
+        <div className="text-sm opacity-70 py-6 text-center">You have not saved any papers yet.</div>
       ) : (
-        <ul className="flex flex-col gap-3">
-          {items.map((item) => {
-            const subjectMeta = ALL_SUBJECTS.find((s) => s.id === item.subject_id);
-            const subjectName = subjectMeta
-              ? tSubjects(`subjects.${item.subject_id}`)
-              : item.subject_id;
-            const mediumLabel = mediumTagKey[item.medium]
-              ? tDetail(mediumTagKey[item.medium])
-              : item.medium;
-            const docTypeLabel =
-              item.doc_type === "marking" ? tDetail("markingSchemeTab") : tDetail("questionPaperTab");
-
+        <div className="grid gap-3">
+          {papers.map((paper) => {
+            const level = paper.subject_id.startsWith("al") ? "al" : "ol";
             return (
-              <li
-                key={item.id}
-                className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 ${
-                  isDarkMode ? "border-gray-700" : "border-gray-200"
-                }`}
-              >
-                <Link href={`/subject/${item.subject_id}`} className="min-w-0 flex-1">
-                  <p
-                    className={`text-sm font-bold truncate ${
-                      isDarkMode ? "text-white" : "text-[#1A365D]"
-                    } hover:text-[#DD6B20]`}
-                  >
-                    {subjectName}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-                    {item.year} &middot; {mediumLabel} &middot; {docTypeLabel}
-                  </p>
+              <div key={paper.id} className={`flex items-center justify-between gap-4 rounded-xl border p-4 ${isDarkMode ? "border-gray-700" : "border-gray-200"}`}>
+                <Link href={`/papers/${level}/${paper.subject_id}/${paper.year}/${paper.medium}`} className="min-w-0 hover:text-[#DD6B20]">
+                  <strong className="block truncate">{subjectName(paper.subject_id)}</strong>
+                  <span className="text-xs opacity-70">{paper.year} • {paper.medium} • {paper.doc_type}</span>
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => removeSaved(item)}
-                  disabled={removingId === item.id}
-                  aria-label={t("removeLabel")}
-                  className={`shrink-0 p-2 rounded-lg transition-colors disabled:opacity-50 ${
-                    isDarkMode
-                      ? "text-gray-400 hover:text-red-400 hover:bg-red-400/10"
-                      : "text-gray-500 hover:text-red-500 hover:bg-red-50"
-                  }`}
-                >
-                  <X size={16} />
+                <button onClick={() => remove(paper)} className="shrink-0 p-2 rounded-lg hover:bg-red-500/10 text-red-500" title="Remove saved paper">
+                  <Trash2 size={17} />
                 </button>
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
-    </div>
+    </section>
   );
 }
