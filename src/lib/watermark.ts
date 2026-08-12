@@ -1,44 +1,64 @@
-import { PDFDocument, PDFPage, PDFArray, PDFName, PDFString, StandardFonts, rgb } from "pdf-lib";
+import {
+  PDFDocument,
+  PDFPage,
+  PDFArray,
+  PDFName,
+  PDFString,
+  StandardFonts,
+  rgb,
+} from "pdf-lib";
 import { WATERMARK_LOGO_BASE64 } from "./watermarkAssets";
 
 /**
  * Professional PDF watermarking for uploaded past papers.
  *
  * Adds three things to every page:
- *  1. A slim header line with the site address, in an elegant italic font.
- *  2. A matching footer line.
- *  3. A large, very faint center logo watermark.
+ *  1. Header text with a yellow highlight.
+ *  2. Footer text with a yellow highlight.
+ *  3. A more visible center logo watermark.
  *
- * Every one of these is also a clickable link back to the site, so a reader
- * tapping the header/footer text or the center logo is taken to pastpaperzone.lk.
- * Everything is deliberately low-opacity / edge-placed so it never gets in the
- * way of the actual paper content.
+ * Header/footer and center logo are clickable and link to the website.
  */
 
 const SITE_URL = "https://www.pastpaperzone.lk";
 const BRAND_TEXT = "Downloaded from: www.pastpaperzone.lk";
 
-// Matches the blue used in the PastPaperZone logo/wordmark.
+// Brand text color
 const BRAND_COLOR = rgb(0.145, 0.4, 0.68);
+
+// Yellow highlight color
+const HIGHLIGHT_COLOR = rgb(1, 0.92, 0.25);
+
+// Highlight transparency.
+// 0 = fully transparent, 1 = fully solid.
+const HIGHLIGHT_OPACITY = 0.65;
 
 const HEADER_FONT_SIZE = 8.5;
 const FOOTER_FONT_SIZE = 8.5;
-const HEADER_Y_FROM_TOP = 20; // pt from the top edge
-const FOOTER_Y_FROM_BOTTOM = 16; // pt from the bottom edge
 
-// Center logo: kept faint and capped in size so it can never obscure content.
-const LOGO_OPACITY = 0.08;
-const LOGO_MAX_WIDTH_RATIO = 0.42; // of page width
-const LOGO_MAX_HEIGHT_RATIO = 0.38; // of page height
+const HEADER_Y_FROM_TOP = 20;
+const FOOTER_Y_FROM_BOTTOM = 16;
+
+// ------------------------------------------------------------
+// CENTER LOGO WATERMARK
+// Increased from 0.08 so the logo is easier to see.
+// ------------------------------------------------------------
+const LOGO_OPACITY = 0.16;
+
+const LOGO_MAX_WIDTH_RATIO = 0.42;
+const LOGO_MAX_HEIGHT_RATIO = 0.38;
+
+// Padding around the yellow highlight
+const HIGHLIGHT_PADDING_X = 4;
+const HIGHLIGHT_PADDING_Y = 2.5;
 
 function base64ToBytes(base64: string): Uint8Array {
   return new Uint8Array(Buffer.from(base64, "base64"));
 }
 
 /**
- * Adds an invisible clickable "Link" annotation over a rectangular region of a page.
- * Wrapped defensively: if annotation construction ever fails for a given PDF, the
- * visual watermark still succeeds - only the click-through link is skipped.
+ * Adds an invisible clickable Link annotation over a rectangular
+ * region of a PDF page.
  */
 function addLinkAnnotation(
   page: PDFPage,
@@ -48,6 +68,7 @@ function addLinkAnnotation(
 ) {
   try {
     const { context } = doc;
+
     const annotDict = context.obj({
       Type: "Annot",
       Subtype: "Link",
@@ -59,39 +80,73 @@ function addLinkAnnotation(
         URI: PDFString.of(url),
       },
     });
+
     const annotRef = context.register(annotDict);
 
-    const existingAnnots = page.node.lookup(PDFName.of("Annots"), PDFArray);
+    const existingAnnots = page.node.lookup(
+      PDFName.of("Annots"),
+      PDFArray
+    );
+
     if (existingAnnots instanceof PDFArray) {
       existingAnnots.push(annotRef);
     } else {
-      page.node.set(PDFName.of("Annots"), context.obj([annotRef]));
+      page.node.set(
+        PDFName.of("Annots"),
+        context.obj([annotRef])
+      );
     }
   } catch (err) {
-    console.error("Watermark: failed to add link annotation", err);
+    console.error(
+      "Watermark: failed to add link annotation",
+      err
+    );
   }
 }
 
-export async function applyWatermark(pdfBytes: ArrayBuffer | Uint8Array): Promise<Uint8Array> {
+export async function applyWatermark(
+  pdfBytes: ArrayBuffer | Uint8Array
+): Promise<Uint8Array> {
   const pdfDoc = await PDFDocument.load(pdfBytes);
 
-  const italicFont = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
-  const logoImage = await pdfDoc.embedPng(base64ToBytes(WATERMARK_LOGO_BASE64));
+  // Font
+  const italicFont = await pdfDoc.embedFont(
+    StandardFonts.TimesRomanItalic
+  );
+
+  // Logo
+  const logoImage = await pdfDoc.embedPng(
+    base64ToBytes(WATERMARK_LOGO_BASE64)
+  );
+
   const logoAspect = logoImage.height / logoImage.width;
 
-  const headerTextWidth = italicFont.widthOfTextAtSize(BRAND_TEXT, HEADER_FONT_SIZE);
-  const footerTextWidth = italicFont.widthOfTextAtSize(BRAND_TEXT, FOOTER_FONT_SIZE);
+  // Text widths
+  const headerTextWidth = italicFont.widthOfTextAtSize(
+    BRAND_TEXT,
+    HEADER_FONT_SIZE
+  );
+
+  const footerTextWidth = italicFont.widthOfTextAtSize(
+    BRAND_TEXT,
+    FOOTER_FONT_SIZE
+  );
 
   for (const page of pdfDoc.getPages()) {
     const { width, height } = page.getSize();
 
-    // --- Center logo watermark ---
+    // ========================================================
+    // CENTER LOGO WATERMARK
+    // ========================================================
+
     let logoWidth = width * LOGO_MAX_WIDTH_RATIO;
     let logoHeight = logoWidth * logoAspect;
+
     if (logoHeight > height * LOGO_MAX_HEIGHT_RATIO) {
       logoHeight = height * LOGO_MAX_HEIGHT_RATIO;
       logoWidth = logoHeight / logoAspect;
     }
+
     const logoX = (width - logoWidth) / 2;
     const logoY = (height - logoHeight) / 2;
 
@@ -100,13 +155,55 @@ export async function applyWatermark(pdfBytes: ArrayBuffer | Uint8Array): Promis
       y: logoY,
       width: logoWidth,
       height: logoHeight,
+
+      // Increased visibility
       opacity: LOGO_OPACITY,
     });
-    addLinkAnnotation(page, pdfDoc, [logoX, logoY, logoX + logoWidth, logoY + logoHeight], SITE_URL);
 
-    // --- Header ---
+    addLinkAnnotation(
+      page,
+      pdfDoc,
+      [
+        logoX,
+        logoY,
+        logoX + logoWidth,
+        logoY + logoHeight,
+      ],
+      SITE_URL
+    );
+
+    // ========================================================
+    // HEADER
+    // ========================================================
+
     const headerX = (width - headerTextWidth) / 2;
     const headerY = height - HEADER_Y_FROM_TOP;
+
+    // Yellow highlight rectangle
+    const headerHighlightX =
+      headerX - HIGHLIGHT_PADDING_X;
+
+    const headerHighlightY =
+      headerY - HIGHLIGHT_PADDING_Y;
+
+    const headerHighlightWidth =
+      headerTextWidth +
+      HIGHLIGHT_PADDING_X * 2;
+
+    const headerHighlightHeight =
+      HEADER_FONT_SIZE +
+      HIGHLIGHT_PADDING_Y * 2;
+
+    page.drawRectangle({
+      x: headerHighlightX,
+      y: headerHighlightY,
+      width: headerHighlightWidth,
+      height: headerHighlightHeight,
+      color: HIGHLIGHT_COLOR,
+      opacity: HIGHLIGHT_OPACITY,
+    });
+
+    // Header text
     page.drawText(BRAND_TEXT, {
       x: headerX,
       y: headerY,
@@ -114,16 +211,52 @@ export async function applyWatermark(pdfBytes: ArrayBuffer | Uint8Array): Promis
       font: italicFont,
       color: BRAND_COLOR,
     });
+
+    // Clickable header area
     addLinkAnnotation(
       page,
       pdfDoc,
-      [headerX - 2, headerY - 3, headerX + headerTextWidth + 2, headerY + HEADER_FONT_SIZE + 2],
+      [
+        headerHighlightX,
+        headerHighlightY,
+        headerHighlightX + headerHighlightWidth,
+        headerHighlightY + headerHighlightHeight,
+      ],
       SITE_URL
     );
 
-    // --- Footer ---
+    // ========================================================
+    // FOOTER
+    // ========================================================
+
     const footerX = (width - footerTextWidth) / 2;
     const footerY = FOOTER_Y_FROM_BOTTOM;
+
+    // Yellow highlight rectangle
+    const footerHighlightX =
+      footerX - HIGHLIGHT_PADDING_X;
+
+    const footerHighlightY =
+      footerY - HIGHLIGHT_PADDING_Y;
+
+    const footerHighlightWidth =
+      footerTextWidth +
+      HIGHLIGHT_PADDING_X * 2;
+
+    const footerHighlightHeight =
+      FOOTER_FONT_SIZE +
+      HIGHLIGHT_PADDING_Y * 2;
+
+    page.drawRectangle({
+      x: footerHighlightX,
+      y: footerHighlightY,
+      width: footerHighlightWidth,
+      height: footerHighlightHeight,
+      color: HIGHLIGHT_COLOR,
+      opacity: HIGHLIGHT_OPACITY,
+    });
+
+    // Footer text
     page.drawText(BRAND_TEXT, {
       x: footerX,
       y: footerY,
@@ -131,10 +264,17 @@ export async function applyWatermark(pdfBytes: ArrayBuffer | Uint8Array): Promis
       font: italicFont,
       color: BRAND_COLOR,
     });
+
+    // Clickable footer area
     addLinkAnnotation(
       page,
       pdfDoc,
-      [footerX - 2, footerY - 3, footerX + footerTextWidth + 2, footerY + FOOTER_FONT_SIZE + 2],
+      [
+        footerHighlightX,
+        footerHighlightY,
+        footerHighlightX + footerHighlightWidth,
+        footerHighlightY + footerHighlightHeight,
+      ],
       SITE_URL
     );
   }
