@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
-import { PDFDocument, rgb, degrees } from "pdf-lib";
+import { applyWatermark } from "@/lib/watermark";
 import { ADMIN_COOKIE_NAME, verifyAdminToken } from "@/lib/adminAuth";
 
 export async function POST(request: Request) {
@@ -24,16 +24,9 @@ export async function POST(request: Request) {
     }
 
     const bytes = await file.arrayBuffer();
-    const pdfDoc = await PDFDocument.load(bytes);
-    for (const page of pdfDoc.getPages()) {
-      const { width, height } = page.getSize();
-      page.drawText("PASTPAPERZONE", {
-        x: width / 2 - 150, y: height / 2, size: 36,
-        color: rgb(0.85, 0.35, 0.15), opacity: 0.25, rotate: degrees(45),
-      });
-    }
+    const watermarkedBytes = await applyWatermark(bytes);
 
-    const buffer = Buffer.from(await pdfDoc.save());
+    const buffer = Buffer.from(watermarkedBytes);
     const key = `papers/${subjectId}/${year}/${medium}/${docType}.pdf`;
     const bucket = await getR2Bucket();
 
