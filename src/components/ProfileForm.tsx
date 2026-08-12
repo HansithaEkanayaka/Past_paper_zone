@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { createClient } from "@/lib/supabase/client";
@@ -111,7 +112,9 @@ export default function ProfileForm({ onClose }: ProfileFormProps) {
 
   return (
     <div
-      className={`w-full max-w-lg rounded-3xl p-6 sm:p-8 border shadow-2xl relative transition-all duration-300 max-h-[90vh] overflow-y-auto ${
+      className={`w-full max-w-lg rounded-3xl p-6 sm:p-8 border shadow-2xl relative transition-all duration-300 ${
+        onClose ? "max-h-[90vh] overflow-y-auto" : ""
+      } ${
         isDarkMode
           ? "bg-[#1A202C] border-gray-700/80 text-white"
           : "bg-white border-gray-100 text-gray-900"
@@ -173,18 +176,18 @@ export default function ProfileForm({ onClose }: ProfileFormProps) {
           </h3>
           <ul className="space-y-2 text-sm">
             <li className="flex items-center gap-2">
-              <span aria-hidden="true">📧</span>
+              <Mail size={14} className="text-[#DD6B20] shrink-0" aria-hidden="true" />
               <span className="truncate">{user.email}</span>
             </li>
             {phone && (
               <li className="flex items-center gap-2">
-                <span aria-hidden="true">📞</span>
+                <Phone size={14} className="text-[#DD6B20] shrink-0" aria-hidden="true" />
                 <span className="truncate">{phone}</span>
               </li>
             )}
             {location && (
               <li className="flex items-center gap-2">
-                <span aria-hidden="true">📍</span>
+                <MapPin size={14} className="text-[#DD6B20] shrink-0" aria-hidden="true" />
                 <span className="truncate">{location}</span>
               </li>
             )}

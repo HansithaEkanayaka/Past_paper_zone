@@ -199,7 +199,13 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
           <div className={`w-full max-w-lg rounded-2xl p-6 ${isDarkMode ? "bg-[#2D3748] text-white" : "bg-white text-gray-900"}`} onClick={(e) => e.stopPropagation()}>
             <h2 className="text-xl font-extrabold">Report this paper</h2>
             <p className="text-sm opacity-70 mt-1">{year} • {subjectName} • {mediumNames[medium]}</p>
-            <select value={reason} onChange={(e) => setReason(e.target.value)} className="w-full mt-5 rounded-xl border p-3 bg-transparent">
+            <select
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className={`w-full mt-5 rounded-xl border p-3 ${
+                isDarkMode ? "bg-[#1A202C] border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"
+              }`}
+            >
               <option>PDF doesn&apos;t open</option>
               <option>Wrong paper</option>
               <option>Missing pages</option>
@@ -207,7 +213,18 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
               <option>Poor quality</option>
               <option>Other</option>
             </select>
-            <textarea value={details} onChange={(e) => setDetails(e.target.value)} rows={4} maxLength={1000} placeholder="Optional details" className="w-full mt-3 rounded-xl border p-3 bg-transparent" />
+            <textarea
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder="Optional details"
+              className={`w-full mt-3 rounded-xl border p-3 ${
+                isDarkMode
+                  ? "bg-[#1A202C] border-gray-600 text-white placeholder-gray-500"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"
+              }`}
+            />
             <div className="flex justify-end gap-3 mt-4">
               <button onClick={() => setReport(false)} className="px-4 py-2 rounded-lg border font-bold">Cancel</button>
               <button onClick={submitReport} className="px-4 py-2 rounded-lg bg-[#DD6B20] text-white font-bold">Submit report</button>
