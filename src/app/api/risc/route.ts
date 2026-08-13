@@ -9,23 +9,23 @@ export async function POST(request: Request) {
     const keyPath = path.join(process.cwd(), 'service-account.key.json');
     const keyFile = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
 
-    // 2. JWT క్లాස් එක භාවිතයෙන් client එක සකස් කිරීම
+    // 2. JWT ක්ලාස් එක භාවිතයෙන් client එක සකස් කිරීම
     const client = new JWT({
       email: keyFile.client_email,
       key: keyFile.private_key,
       scopes: ['https://www.googleapis.com/auth/risc'],
     });
 
-    // 3. Access Token එක ලබා ගැනීම
-    const accessTokenResponse = await client.getAccessToken();
-    const token = accessTokenResponse.token;
+    // 3. authorize() හරහා Access Token එක ලබා ගැනීම
+    const tokens = await client.authorize();
+    const token = tokens.access_token;
 
     if (!token) {
       throw new Error('Access token එක ලබා ගැනීමට නොහැකි විය.');
     }
 
     // 4. RISC stream configuration API එක වෙත POST ඉල්ලීම යැවීම
-    const riscResponse = await fetch('https://risc.googleapis.com/v1/stream/update', {
+    const response = await fetch('https://risc.googleapis.com/v1/stream/update', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       }),
     });
 
-    const data = await riscResponse.json();
+    const data = await response.json();
     return NextResponse.json({ success: true, data });
 
   } catch (error: any) {
