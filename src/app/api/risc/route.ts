@@ -16,12 +16,14 @@ export async function POST(request: Request) {
       scopes: ['https://www.googleapis.com/auth/risc'],
     });
 
-    // 3. authorize() හරහා Access Token එක ලබා ගැනීම
-    const tokens = await client.authorize();
-    const token = tokens.access_token;
+    // 3. Access Token එක ලබා ගැනීම (මෙම කොටස වෙනස් කරන්න)
+    const accessTokenResponse = await client.getAccessToken();
+    const token = accessTokenResponse.token || accessTokenResponse;
+
+    console.log("Token response check:", accessTokenResponse); // Debugging සඳහා
 
     if (!token) {
-      throw new Error('Access token එක ලබා ගැනීමට නොහැකි විය.');
+      throw new Error('Access token එක ලැබුණේ නැත.');
     }
 
     // 4. RISC stream configuration API එක වෙත POST ඉල්ලීම යැවීම
