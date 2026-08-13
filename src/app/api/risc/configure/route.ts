@@ -1,89 +1,27 @@
 import { NextResponse } from "next/server";
 
+import {
+  checkRiscAdminSecret,
+  createRiscAuthorizationToken,
+  readResponseBody,
+  RISC_DELIVERY_METHOD,
+  RISC_EVENTS,
+  RISC_RECEIVER_URL,
+  RISC_STREAM_URL,
+  RISC_UPDATE_URL,
+  RISC_VERIFY_URL,
+} from "@/lib/risc";
+
 export const runtime = "nodejs";
 
-const RISC_UPDATE_URL =
-  "https://risc.googleapis.com/v1beta/stream:update";
-
-const RISC_VERIFY_URL =
-  "https://risc.googleapis.com/v1beta/stream:verify";
-
-const DELIVERY_METHOD =
-  "https://schemas.openid.net/secevent/risc/delivery-method/push";
-
-const RECEIVER_URL =
-  "https://pastpaperzone.lk/api/risc";
-
-const EVENTS = [
-  "https://schemas.openid.net/secevent/risc/event-type/account-disabled",
-  "https://schemas.openid.net/secevent/risc/event-type/account-enabled",
-  "https://schemas.openid.net/secevent/risc/event-type/account-credential-change-required",
-  "https://schemas.openid.net/secevent/risc/event-type/sessions-revoked",
-  "https://schemas.openid.net/secevent/risc/event-type/verification",
-];
-
-async function getAuthorizationToken() {
-  const adminSecret = process.env.RISC_ADMIN_SECRET;
-
-  if (!adminSecret) {
-    throw new Error("RISC_ADMIN_SECRET is not configured");
-  }
-
-  const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-
-  if (!clientEmail) {
-    throw new Error(
-      "GOOGLE_SERVICE_ACCOUNT_EMAIL is not configured"
-    );
-  }
-
-  const privateKeyRaw =
-    process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
-
-  if (!privateKeyRaw) {
-    throw new Error(
-      "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY is not configured"
-    );
-  }
-
-  const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
-
-  const { importPKCS8, SignJWT } = await import("jose");
-
-  const key = await importPKCS8(privateKey, "RS256");
-
-  const now = Math.floor(Date.now() / 1000);
-
-  return await new SignJWT({})
-    .setProtectedHeader({
-      alg: "RS256",
-      typ: "JWT",
-    })
-    .setIssuer(clientEmail)
-    .setSubject(clientEmail)
-    .setAudience(
-      "https://risc.googleapis.com/google.identity.risc.v1beta.RiscManagementService"
-    )
-    .setIssuedAt(now)
-    .setExpirationTime(now + 3600)
-    .sign(key);
-}
-
-async function checkAdmin(request: Request) {
-  const expected = process.env.RISC_ADMIN_SECRET;
-
-  if (!expected) {
-    return false;
-  }
-
-  return (
-    request.headers.get("x-risc-admin-secret") === expected
-  );
-}
-
+/**
+ * POST /api/risc/configure
+ *
+ * Registers / updates the Google RISC event stream.
+ */
 export async function POST(request: Request) {
   try {
-    if (!(await checkAdmin(request))) {
+    if (!checkRiscAdminSecret(request)) {
       return NextResponse.json(
         {
           success: false,
@@ -93,7 +31,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = await getAuthorizationToken();
+    const token = await createRiscAuthorizationToken();
+
+    const body = {
+      delivery: {
+        delivery_method: RISC_DELIVERY_METHOD,
+        url: RISC_RECEIVER_URL,
+      },
+      events_requested: RISC_EVENTS,
+    };
 
     const response = await fetch(RISC_UPDATE_URL, {
       method: "POST",
@@ -101,47 +47,38 @@ export async function POST(request: Request) {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        delivery: {
-          delivery_method: DELIVERY_METHOD,
-          url: RECEIVER_URL,
-        },
-        events_requested: EVENTS,
-      }),
+      body: JSON.stringify(body),
+      cache: "no-store",
     });
 
-    const text = await response.text();
-
-    let data: unknown;
-
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
+    const googleResponse = await readResponseBody(response);
 
     if (!response.ok) {
-      console.error("Google RISC configuration failed:", {
+      console.error("Google RISC stream:update failed:", {
         status: response.status,
-        data,
+        response: googleResponse,
       });
 
       return NextResponse.json(
         {
           success: false,
+          error: "Google RISC stream configuration failed",
           google_status: response.status,
-          google_response: data,
+          google_response: googleResponse,
         },
-        { status: response.status }
+        {
+          status: response.status,
+        }
       );
     }
 
     return NextResponse.json({
       success: true,
       message: "RISC stream configured successfully",
-      receiver: RECEIVER_URL,
-      events: EVENTS,
-      google_response: data,
+      receiver: RISC_RECEIVER_URL,
+      delivery_method: RISC_DELIVERY_METHOD,
+      events: RISC_EVENTS,
+      google_response: googleResponse,
     });
   } catch (error) {
     console.error("RISC configuration error:", error);
@@ -159,18 +96,14 @@ export async function POST(request: Request) {
   }
 }
 
-/*
- * Optional verification endpoint.
- *
- * POST /api/risc/configure
- * does stream:update.
- *
+/**
  * GET /api/risc/configure
- * performs stream:verify.
+ *
+ * Returns the current Google RISC stream configuration.
  */
 export async function GET(request: Request) {
   try {
-    if (!(await checkAdmin(request))) {
+    if (!checkRiscAdminSecret(request)) {
       return NextResponse.json(
         {
           success: false,
@@ -180,11 +113,82 @@ export async function GET(request: Request) {
       );
     }
 
-    const token = await getAuthorizationToken();
+    const token = await createRiscAuthorizationToken();
+
+    const response = await fetch(RISC_STREAM_URL, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    const googleResponse = await readResponseBody(response);
+
+    if (!response.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to read Google RISC stream configuration",
+          google_status: response.status,
+          google_response: googleResponse,
+        },
+        {
+          status: response.status,
+        }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      google_response: googleResponse,
+    });
+  } catch (error) {
+    console.error(
+      "RISC stream configuration read failed:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to read RISC configuration",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PUT /api/risc/configure
+ *
+ * Sends a verification request through Google's RISC stream.
+ *
+ * This is intentionally separate from POST because:
+ *
+ * POST = configure stream
+ * PUT  = verify stream
+ */
+export async function PUT(request: Request) {
+  try {
+    if (!checkRiscAdminSecret(request)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized",
+        },
+        { status: 401 }
+      );
+    }
+
+    const token = await createRiscAuthorizationToken();
 
     const state =
-      "pastpaper-risc-test-" +
-      Date.now().toString();
+      `pastpaperzone-risc-${Date.now()}-${crypto.randomUUID()}`;
 
     const response = await fetch(RISC_VERIFY_URL, {
       method: "POST",
@@ -195,38 +199,38 @@ export async function GET(request: Request) {
       body: JSON.stringify({
         state,
       }),
+      cache: "no-store",
     });
 
-    const text = await response.text();
-
-    let data: unknown;
-
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
+    const googleResponse = await readResponseBody(response);
 
     if (!response.ok) {
       return NextResponse.json(
         {
           success: false,
+          error: "Google RISC verification request failed",
           google_status: response.status,
-          google_response: data,
+          google_response: googleResponse,
+          state,
         },
-        { status: response.status }
+        {
+          status: response.status,
+        }
       );
     }
 
     return NextResponse.json({
       success: true,
       message:
-        "Verification request sent. Check your deployment logs for the verification event.",
+        "RISC verification request sent successfully",
       state,
-      google_response: data,
+      google_response: googleResponse,
     });
   } catch (error) {
-    console.error("RISC verification error:", error);
+    console.error(
+      "RISC verification request failed:",
+      error
+    );
 
     return NextResponse.json(
       {
