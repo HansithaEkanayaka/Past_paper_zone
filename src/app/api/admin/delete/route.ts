@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
+import { getR2Bucket } from "@/lib/r2";
 import { ADMIN_COOKIE_NAME, verifyAdminToken } from "@/lib/adminAuth";
 
 export async function DELETE(request: Request) {
@@ -15,16 +14,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "File Key required" }, { status: 400 });
     }
 
-    const bucket = await getR2Bucket();
-    if (bucket) {
-      await bucket.delete(fileKey);
-    } else {
-      await getR2S3Client().send(new DeleteObjectCommand({ Bucket: getR2BucketName(), Key: fileKey }));
-    }
-
+    await (await getR2Bucket()).delete(fileKey);
     return NextResponse.json({ success: true, message: "File deleted successfully" });
   } catch (error) {
     console.error("Delete error:", error);
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete file" }, { status: 500 });
   }
 }

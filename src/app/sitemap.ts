@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
-import { ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { getR2Bucket } from "@/lib/r2";
 import subjects from "@/messages/en.json";
 
 const baseUrl = "https://pastpaperzone.lk";
@@ -29,30 +28,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const keys: { key: string; uploaded?: Date }[] = [];
     const bucket = await getR2Bucket();
+    let cursor: string | undefined;
 
-    if (bucket) {
-      let cursor: string | undefined;
-      do {
-        const page = await bucket.list({ prefix: "papers/", cursor });
-        keys.push(...page.objects);
-        cursor = page.truncated ? page.cursor : undefined;
-      } while (cursor);
-    } else {
-      let token: string | undefined;
-      do {
-        const page = await getR2S3Client().send(
-          new ListObjectsV2Command({
-            Bucket: getR2BucketName(),
-            Prefix: "papers/",
-            ContinuationToken: token,
-          })
-        );
-        for (const item of page.Contents ?? []) {
-          if (item.Key) keys.push({ key: item.Key, uploaded: item.LastModified });
-        }
-        token = page.IsTruncated ? page.NextContinuationToken : undefined;
-      } while (token);
-    }
+    do {
+      const page = await bucket.list({ prefix: "papers/", cursor });
+      keys.push(...page.objects);
+      cursor = page.truncated ? page.cursor : undefined;
+    } while (cursor);
 
     const seen = new Set<string>();
     for (const item of keys) {
@@ -75,7 +57,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("Sitemap paper listing error:", error);
   }
 
-  // Keep the subject-level pages discoverable even if R2 is temporarily unavailable.
   const subjectIds = Object.keys(subjects.SubjectCard.subjects);
   for (const locale of ["en", "si", "ta"]) {
     for (const subjectId of subjectIds) {

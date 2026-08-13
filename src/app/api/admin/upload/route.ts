@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { getR2Bucket, getR2BucketName, getR2S3Client } from "@/lib/r2";
+import { getR2Bucket } from "@/lib/r2";
 import { applyWatermark } from "@/lib/watermark";
 import { ADMIN_COOKIE_NAME, verifyAdminToken } from "@/lib/adminAuth";
 
@@ -29,14 +28,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(watermarkedBytes);
     const key = `papers/${subjectId}/${year}/${medium}/${docType}.pdf`;
     const bucket = await getR2Bucket();
-
-    if (bucket) {
-      await bucket.put(key, buffer, { httpMetadata: { contentType: "application/pdf" } });
-    } else {
-      await getR2S3Client().send(new PutObjectCommand({
-        Bucket: getR2BucketName(), Key: key, Body: buffer, ContentType: "application/pdf",
-      }));
-    }
+    await bucket.put(key, buffer, { httpMetadata: { contentType: "application/pdf" } });
 
     return NextResponse.json({ success: true, key });
   } catch (error: unknown) {
