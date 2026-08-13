@@ -1,18 +1,22 @@
 import { NextResponse } from 'next/server';
-import { GoogleAuth } from 'google-auth-library';
+import { JWT } from 'google-auth-library';
+import fs from 'fs';
 import path from 'path';
 
 export async function POST(request: Request) {
   try {
-    // 1. Google Auth හරහා service account එක පාවිච්චි කරලා access token එක ලබා ගැනීම
-    const auth = new GoogleAuth({
-      keyFile: path.join(process.cwd(), 'service-account.key.json'),
+    // 1. service-account.key.json ගොනුව කියවා ගැනීම
+    const keyPath = path.join(process.cwd(), 'service-account.key.json');
+    const keyFile = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
+
+    // 2. JWT క్లాස් එක භාවිතයෙන් client එක සකස් කිරීම
+    const client = new JWT({
+      email: keyFile.client_email,
+      key: keyFile.private_key,
       scopes: ['https://www.googleapis.com/auth/risc'],
     });
 
-    const client = await auth.getClient();
-    
-    // OAuth 2.0 access token එක ලබා ගැනීම
+    // 3. Access Token එක ලබා ගැනීම
     const accessTokenResponse = await client.getAccessToken();
     const token = accessTokenResponse.token;
 
@@ -20,7 +24,7 @@ export async function POST(request: Request) {
       throw new Error('Access token එක ලබා ගැනීමට නොහැකි විය.');
     }
 
-    // 2. RISC stream configuration API එක වෙත POST ඉල්ලීම යැවීම
+    // 4. RISC stream configuration API එක වෙත POST ඉල්ලීම යැවීම
     const riscResponse = await fetch('https://risc.googleapis.com/v1/stream/update', {
       method: 'POST',
       headers: {
@@ -28,7 +32,6 @@ export async function POST(request: Request) {
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
-        // ඔයාගේ delivery configuration මෙතනට දාන්න
         delivery: {
           method: 'https://schemas.openid.net/secevent/risc/delivery-method/push',
           url: 'https://pastpaperzone.lk/api/risc',
