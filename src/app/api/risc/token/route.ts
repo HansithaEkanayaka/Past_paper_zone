@@ -6,23 +6,8 @@ export const runtime = "nodejs";
 const RISC_AUDIENCE =
   "https://risc.googleapis.com/google.identity.risc.v1beta.RiscManagementService";
 
-function getPrivateKey() {
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
-
-  if (!key) {
-    throw new Error(
-      "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY is not configured"
-    );
-  }
-
-  return key.replace(/\\n/g, "\n");
-}
-
 export async function POST(request: Request) {
   try {
-    /*
-     * Protect this endpoint.
-     */
     const adminSecret = process.env.RISC_ADMIN_SECRET;
 
     if (!adminSecret) {
@@ -36,9 +21,9 @@ export async function POST(request: Request) {
     }
 
     const suppliedSecret =
-      request.headers.get("x-risc-admin-secret") || "";
+      request.headers.get("x-risc-admin-secret")?.trim() || "";
 
-    if (suppliedSecret !== adminSecret) {
+    if (!suppliedSecret || suppliedSecret !== adminSecret) {
       return NextResponse.json(
         {
           success: false,
@@ -48,41 +33,58 @@ export async function POST(request: Request) {
       );
     }
 
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    const clientEmail =
+      process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+
+    const privateKeyRaw =
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+
+    const privateKeyId =
+      process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY_ID;
 
     if (!clientEmail) {
-      throw new Error(
-        "GOOGLE_SERVICE_ACCOUNT_EMAIL is not configured"
+      return NextResponse.json(
+        {
+          success: false,
+          error: "GOOGLE_SERVICE_ACCOUNT_EMAIL is not configured",
+        },
+        { status: 500 }
       );
     }
 
-    const privateKey = await importPKCS8(
-      getPrivateKey(),
+    if (!privateKeyRaw) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY is not configured",
+        },
+        { status: 500 }
+      );
+    }
+
+    const privateKey = privateKeyRaw.replace(/\\n/g, "\n");
+
+    const signingKey = await importPKCS8(
+      privateKey,
       "RS256"
     );
 
     const now = Math.floor(Date.now() / 1000);
 
-    /*
-     * Google RISC documentation requires:
-     *
-     * iss = service account email
-     * sub = service account email
-     * aud = RISC management service
-     * iat = current time
-     * exp = current time + 3600
-     */
-    const token = await new SignJWT({})
+    const jwt = new SignJWT({})
       .setProtectedHeader({
         alg: "RS256",
         typ: "JWT",
+        ...(privateKeyId ? { kid: privateKeyId } : {}),
       })
       .setIssuer(clientEmail)
       .setSubject(clientEmail)
       .setAudience(RISC_AUDIENCE)
       .setIssuedAt(now)
-      .setExpirationTime(now + 3600)
-      .sign(privateKey);
+      .setExpirationTime(now + 3600);
+
+    const token = await jwt.sign(signingKey);
 
     return NextResponse.json({
       success: true,
