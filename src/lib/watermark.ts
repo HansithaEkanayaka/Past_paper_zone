@@ -43,7 +43,7 @@ const FOOTER_Y_FROM_BOTTOM = 16;
 // CENTER LOGO WATERMARK
 // Increased from 0.08 so the logo is easier to see.
 // ------------------------------------------------------------
-const LOGO_OPACITY = 0.16;
+const LOGO_OPACITY = 0.25;
 
 const LOGO_MAX_WIDTH_RATIO = 0.42;
 const LOGO_MAX_HEIGHT_RATIO = 0.38;
