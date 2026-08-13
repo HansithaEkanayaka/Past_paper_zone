@@ -258,7 +258,7 @@ export default function Header() {
           >
             <Link
               href="/"
-              className="flex items-center gap-2 md:gap-4 group shrink-0 focus:outline-none rounded-lg p-1 transition-all"
+              className="flex items-center gap-1 md:gap-1 group shrink-0 focus:outline-none rounded-lg p-1 transition-all"
             >
               <div className="relative w-16 h-8 sm:w-20 sm:h-10 md:w-28 md:h-14 transition-transform group-hover:scale-105 flex items-center">
                 <Image
@@ -266,9 +266,7 @@ export default function Header() {
                   alt="PastPaperZone Logo"
                   width={100}
                   height={100}
-                  className={`object-contain max-h-full w-auto transition-all ${
-                    isDarkMode ? "brightness-0 invert" : ""
-                  }`}
+                  className="object-contain max-h-full w-auto transition-all"
                   priority
                 />
               </div>
