@@ -1,47 +1,49 @@
 import { NextResponse } from 'next/server';
 import { GoogleAuth } from 'google-auth-library';
-import path from 'path/win32';
+import path from 'path';
 
 export async function POST(request: Request) {
   try {
-    // 1. Google Auth හරහා OIDC ටෝකන් එක ලබා ගැනීම
+    // 1. Google Auth හරහා service account එක පාවිච්චි කරලා access token එක ලබා ගැනීම
     const auth = new GoogleAuth({
-      keyFile: path.join(process.cwd(), 'service-account.key.json'), // ඔබේ සේවා ගිණුමේ JSON ෆයිල් එකේ නිවැරදි මාර්ගය (path) මෙතනට දෙන්න
+      keyFile: path.join(process.cwd(), 'service-account.key.json'),
       scopes: ['https://www.googleapis.com/auth/risc'],
     });
 
-    const client = await auth.getIdTokenClient('https://risc.googleapis.com/');
-    const token = client.credentials.id_token;
+    const client = await auth.getClient();
+    
+    // OAuth 2.0 access token එක ලබා ගැනීම
+    const accessTokenResponse = await client.getAccessToken();
+    const token = accessTokenResponse.token;
+
+    if (!token) {
+      throw new Error('Access token එක ලබා ගැනීමට නොහැකි විය.');
+    }
 
     // 2. RISC stream configuration API එක වෙත POST ඉල්ලීම යැවීම
-    const riscResponse = await fetch('https://risc.googleapis.com/v1beta/stream:update', {
+    const riscResponse = await fetch('https://risc.googleapis.com/v1/stream/update', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({
+        // ඔයාගේ delivery configuration මෙතනට දාන්න
         delivery: {
-          delivery_method: 'https://schemas.openid.net/secevent/risc/delivery-method/push',
-          url: 'https://pastpaperzone.lk/risc', // ඔබේ සැබෑ වෙබ් අඩවි එන්ඩ්පොයින්ට් එක මෙතනට දාන්න
+          method: 'https://schemas.openid.net/secevent/risc/delivery-method/push',
+          url: 'https://pastpaperzone.lk/api/risc',
         },
-        events_requested: [
-          'https://schemas.openid.net/secevent/risc/event-type/account-disabled',
-          'https://schemas.openid.net/secevent/risc/event-type/account-enabled',
-        ],
       }),
     });
-
-    if (!riscResponse.ok) {
-      const errorData = await riscResponse.json();
-      return NextResponse.json({ success: false, error: errorData }, { status: riscResponse.status });
-    }
 
     const data = await riscResponse.json();
     return NextResponse.json({ success: true, data });
 
   } catch (error: any) {
-    console.error('Error configuring RISC stream:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('RISC Error:', error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
