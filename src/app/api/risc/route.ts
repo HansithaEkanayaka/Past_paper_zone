@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   try {
     // 1. Google Auth හරහා OIDC ටෝකන් එක ලබා ගැනීම
     const auth = new GoogleAuth({
-      keyFile: '/service-account.key.json', // ඔබේ සේවා ගිණුමේ JSON ෆයිල් එකේ නිවැරදි මාර්ගය (path) මෙතනට දෙන්න
+      keyFile: 'path.join(process.cwd(), "service-account.key.json")', // ඔබේ සේවා ගිණුමේ JSON ෆයිල් එකේ නිවැරදි මාර්ගය (path) මෙතනට දෙන්න
       scopes: ['https://www.googleapis.com/auth/risc'],
     });
 
