@@ -11,9 +11,9 @@ import {
 const SITE_URL = "https://www.pastpaperzone.lk";
 const BRAND_TEXT = "Downloaded from: www.pastpaperzone.lk";
 
-const BRAND_COLOR = rgb(0.145, 0.4, 0.68);
+const BRAND_COLOR = rgb(0.1, 0.3, 0.55);
 const HIGHLIGHT_COLOR = rgb(1, 0.92, 0.25);
-const HIGHLIGHT_OPACITY = 0.65;
+const HIGHLIGHT_OPACITY = 0.8;
 
 const HEADER_FONT_SIZE = 8.5;
 const FOOTER_FONT_SIZE = 8.5;
@@ -21,8 +21,8 @@ const HEADER_Y_FROM_TOP = 20;
 const FOOTER_Y_FROM_BOTTOM = 16;
 
 // Keep the logo visible but subtle.
-const LOGO_OPACITY = 0.16;
-const LOGO_MAX_WIDTH_RATIO = 0.34;
+const LOGO_OPACITY = 0.35;
+const LOGO_MAX_WIDTH_RATIO = 0.40;
 const LOGO_MAX_HEIGHT_RATIO = 0.30;
 
 const HIGHLIGHT_PADDING_X = 4;

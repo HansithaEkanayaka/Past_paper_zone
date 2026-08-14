@@ -266,7 +266,9 @@ export default function Header() {
                   alt="PastPaperZone Logo"
                   width={100}
                   height={100}
-                  className="object-contain max-h-full w-auto transition-all"
+                  className={`object-contain max-h-full w-auto transition-all ${
+                    !isDarkMode ? "brightness-0 contrast-200" : "" 
+                  }`}
                   priority
                 />
               </div>
