@@ -181,8 +181,22 @@ export default function AdminDashboard() {
 
     setUploading(true);
     try {
+      const { applyWatermarkInBrowser } = await import("@/lib/clientWatermark");
+
+      const watermarkedBytes = await applyWatermarkInBrowser(
+        await file.arrayBuffer()
+      );
+
+      // Create a real ArrayBuffer so TypeScript/Node 24 accepts it as BlobPart.
+      const safeBuffer = new ArrayBuffer(watermarkedBytes.byteLength);
+      new Uint8Array(safeBuffer).set(watermarkedBytes);
+
+      const watermarkedFile = new File([safeBuffer], file.name, {
+        type: "application/pdf",
+      });
+
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", watermarkedFile);
       formData.append("subjectId", subjectId);
       formData.append("year", year);
       formData.append("medium", medium);
