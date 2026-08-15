@@ -952,7 +952,9 @@ export default function SubjectDetailPage() {
                             title={t("previewButton")}
                             className="
                               w-full
-                              h-[70vh]
+                              h-[45vh]
+                              sm:h-[60vh]
+                              md:h-[70vh]
                               bg-white
                             "
                             onError={() =>

@@ -158,14 +158,36 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
           <button onClick={openPaper} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#DD6B20] text-white font-bold">
             <Eye size={18} /> Preview
           </button>
-          <button onClick={downloadPaper} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold">
+          <button
+            onClick={downloadPaper}
+            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold ${
+              isDarkMode
+                ? "bg-[#2D3748] border-gray-600 text-white hover:border-[#DD6B20]"
+                : "bg-white border-gray-300 text-[#1A365D] hover:border-[#DD6B20]"
+            }`}
+          >
             <Download size={18} /> Download
           </button>
-          <button onClick={savePaper} disabled={saving} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold">
+          <button
+            onClick={savePaper}
+            disabled={saving}
+            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold disabled:opacity-60 ${
+              isDarkMode
+                ? "bg-[#2D3748] border-gray-600 text-white hover:border-[#DD6B20]"
+                : "bg-white border-gray-300 text-[#1A365D] hover:border-[#DD6B20]"
+            }`}
+          >
             {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
             {saved ? "Saved" : "Save"}
           </button>
-          <button onClick={() => requireLogin() || setReport(true)} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold">
+          <button
+            onClick={() => requireLogin() || setReport(true)}
+            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold ${
+              isDarkMode
+                ? "bg-[#2D3748] border-gray-600 text-gray-200 hover:border-red-400 hover:text-red-300"
+                : "bg-white border-gray-300 text-gray-600 hover:border-red-400 hover:text-red-500"
+            }`}
+          >
             <Flag size={18} /> Report
           </button>
         </div>
@@ -175,7 +197,13 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
             <button
               key={type}
               onClick={() => { setDocType(type); setPreview(false); }}
-              className={`px-4 py-2 rounded-lg text-sm font-bold ${docType === type ? "bg-[#DD6B20] text-white" : "bg-gray-500/10"}`}
+              className={`px-4 py-2 rounded-lg text-sm font-bold ${
+                docType === type
+                  ? "bg-[#DD6B20] text-white"
+                  : isDarkMode
+                  ? "bg-[#2D3748] border border-gray-600 text-white"
+                  : "bg-gray-500/10 text-[#1A365D]"
+              }`}
             >
               {type === "paper" ? "Question Paper" : "Marking Scheme"}
             </button>
@@ -195,7 +223,7 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
             <strong>{docType === "paper" ? "Question Paper" : "Marking Scheme"} Preview</strong>
             <button onClick={() => setPreview(false)} className="text-sm font-bold text-[#DD6B20]">Close</button>
           </div>
-          <iframe src={fileUrl} title={`${year} ${subjectName} ${docType}`} className="w-full h-[75vh]" />
+            <iframe src={fileUrl} title={`${year} ${subjectName} ${docType}`} className="w-full h-[45vh] sm:h-[60vh] md:h-[75vh]" />
         </div>
       )}
 

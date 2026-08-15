@@ -30,7 +30,7 @@
 }
 
 .brand { display:flex; align-items:center; gap:11px; padding: 3px 8px 26px; }
-.logo { width:42px; height:42px; object-fit:contain; }
+.logo { width:42px; height:42px; object-fit:contain; filter: brightness(0) contrast(200%); }
 .brandName { font-size:17px; font-weight:900; color:#172033; }
 .brandSub { margin-top:2px; font-size:10px; font-weight:800; letter-spacing:.12em; color:#9aa3b2; }
 .mobileClose { display:none; margin-left:auto; border:0; background:transparent; color:#6f7888; }
