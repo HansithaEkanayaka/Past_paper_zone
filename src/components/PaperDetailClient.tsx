@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Bookmark, BookmarkCheck, Download, Eye, Flag } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -22,7 +23,11 @@ const mediumNames = {
 export default function PaperDetailClient({ subjectId, subjectName, level, year, medium }: Props) {
   const { user, openLoginModal } = useAuth();
   const { isDarkMode } = useTheme();
-  const [docType, setDocType] = useState<"paper" | "marking">("paper");
+  const searchParams = useSearchParams();
+  // Allows deep links like ?type=marking (used by the Telegram bot) to open
+  // straight into the marking-scheme tab instead of always defaulting to paper.
+  const initialDocType = searchParams.get("type") === "marking" ? "marking" : "paper";
+  const [docType, setDocType] = useState<"paper" | "marking">(initialDocType);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getR2Bucket } from "@/lib/r2";
 import { ADMIN_COOKIE_NAME, verifyAdminToken } from "@/lib/adminAuth";
+import { notifyChannelNewPaper } from "@/lib/telegramChannelPost";
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -45,6 +46,19 @@ export async function POST(request: Request) {
     await bucket.put(key, bytes, {
       httpMetadata: { contentType: "application/pdf" },
     });
+
+    // Auto-post a channel announcement for the new upload.
+    // Wrapped so a Telegram failure never breaks the upload itself.
+    try {
+      await notifyChannelNewPaper({
+        subjectId,
+        year,
+        medium: medium as "sinhala" | "english" | "tamil",
+        docType: docType as "paper" | "marking",
+      });
+    } catch (notifyError) {
+      console.error("Telegram channel notify failed:", notifyError);
+    }
 
     return NextResponse.json({ success: true, key });
   } catch (error: unknown) {

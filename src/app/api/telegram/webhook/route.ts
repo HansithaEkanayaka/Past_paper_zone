@@ -371,7 +371,7 @@ async function listPaperKeys() {
   } while (cursor);
 
   return keys.filter((key) =>
-    /^papers\/[^/]+\/20\d{2}\/(sinhala|english|tamil)\/paper\.pdf$/i.test(
+    /^papers\/[^/]+\/20\d{2}\/(sinhala|english|tamil)\/(paper|marking)\.pdf$/i.test(
       key
     )
   );
@@ -383,9 +383,11 @@ async function listPaperKeys() {
 |--------------------------------------------------------------------------
 */
 
+type DocType = "paper" | "marking";
+
 function getPaperInfo(key: string) {
   const match = key.match(
-    /^papers\/([^/]+)\/(20\d{2})\/(sinhala|english|tamil)\/paper\.pdf$/i
+    /^papers\/([^/]+)\/(20\d{2})\/(sinhala|english|tamil)\/(paper|marking)\.pdf$/i
   );
 
   if (!match) {
@@ -396,7 +398,33 @@ function getPaperInfo(key: string) {
     subjectId: match[1],
     year: match[2],
     medium: match[3].toLowerCase() as Medium,
+    docType: match[4].toLowerCase() as DocType,
   };
+}
+
+/*
+|--------------------------------------------------------------------------
+| Check a specific document (paper OR marking)
+|--------------------------------------------------------------------------
+*/
+
+function hasDoc(
+  subjectId: string,
+  year: string,
+  medium: Medium,
+  docType: DocType,
+  keys: string[]
+) {
+  return keys.some((key) => {
+    const info = getPaperInfo(key);
+
+    return (
+      info?.subjectId === subjectId &&
+      info.year === year &&
+      info.medium === medium &&
+      info.docType === docType
+    );
+  });
 }
 
 /*
@@ -459,7 +487,8 @@ function hasPaper(
 function paperUrl(
   subjectId: string,
   year: string,
-  medium: Medium
+  medium: Medium,
+  docType: DocType = "paper"
 ) {
   const subject = ALL_SUBJECTS.find(
     (item) => item.id === subjectId
@@ -468,8 +497,17 @@ function paperUrl(
   const level =
     subject?.level.toLowerCase() || "ol";
 
-  return `${BASE_URL}/si/papers/${level}/${subjectId}/${year}/${medium}`;
+  const base = `${BASE_URL}/si/papers/${level}/${subjectId}/${year}/${medium}`;
+
+  return docType === "marking"
+    ? `${base}?type=marking`
+    : base;
 }
+
+const DOC_TYPE_LABEL: Record<DocType, string> = {
+  paper: "📄 ප්‍රශ්න පත්‍රය (Paper)",
+  marking: "📝 පිළිතුරු පත්‍රය (Marking Scheme)",
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -706,6 +744,68 @@ async function showMediumMenu(
 
 /*
 |--------------------------------------------------------------------------
+| Doc type menu (Paper / Marking)
+|--------------------------------------------------------------------------
+*/
+
+async function showDocTypeMenu(
+  chatId: number | string,
+  subjectId: string,
+  year: string,
+  medium: Medium,
+  keys: string[]
+) {
+  const buttons: Array<
+    Array<{
+      text: string;
+      callback_data: string;
+    }>
+  > = [];
+
+  (["paper", "marking"] as DocType[]).forEach(
+    (docType) => {
+      if (
+        hasDoc(
+          subjectId,
+          year,
+          medium,
+          docType,
+          keys
+        )
+      ) {
+        buttons.push([
+          {
+            text: DOC_TYPE_LABEL[docType],
+            callback_data: `ppz:doctype:${subjectId}:${year}:${medium}:${docType}`,
+          },
+        ]);
+      }
+    }
+  );
+
+  if (!buttons.length) {
+    await sendMessage(
+      chatId,
+      "❌ මේ medium එකට files හමු වුණේ නැහැ."
+    );
+
+    return;
+  }
+
+  await sendMessage(
+    chatId,
+
+    `${MEDIUM_LABEL[medium]} — *${year}*\n\n` +
+      "🔎 ඔබට ඕන Paper එකද Marking Scheme එකද?",
+
+    {
+      inline_keyboard: buttons,
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
 | Final paper
 |--------------------------------------------------------------------------
 */
@@ -715,19 +815,21 @@ async function showPaper(
   subjectId: string,
   year: string,
   medium: Medium,
+  docType: DocType,
   keys: string[]
 ) {
   if (
-    !hasPaper(
+    !hasDoc(
       subjectId,
       year,
       medium,
+      docType,
       keys
     )
   ) {
     await sendMessage(
       chatId,
-      "❌ මේ paper එක දැනට available නැහැ."
+      "❌ මේ file එක දැනට available නැහැ."
     );
 
     return;
@@ -740,22 +842,29 @@ async function showPaper(
   const url = paperUrl(
     subjectId,
     year,
-    medium
+    medium,
+    docType
   );
+
+  const docLabel =
+    docType === "marking"
+      ? "Marking Scheme"
+      : "Question Paper";
 
   await sendMessage(
     chatId,
 
     `📚 *${subjectName}*\n\n` +
       `📅 Year: *${year}*\n` +
-      `${MEDIUM_LABEL[medium]}\n\n` +
-      "Paper එක ලබාගැනීමට පහත button එක click කරන්න 👇",
+      `${MEDIUM_LABEL[medium]}\n` +
+      `🗂️ ${docLabel}\n\n` +
+      "ලබාගැනීමට පහත button එක click කරන්න 👇",
 
     {
       inline_keyboard: [
         [
           {
-            text: "📄 View / Download Paper",
+            text: `📄 View / Download ${docLabel}`,
             url,
           },
         ],
@@ -804,7 +913,7 @@ async function sendDiscussionReply(
   lines.push("");
 
   lines.push(
-    "පහත අවශ්‍ය මාධ්‍යය සහ වර්ෂය තෝරන්න 👇"
+    "පහත Paper (📄) / Marking Scheme (📝) tika download කරගන්න 👇"
   );
 
   lines.push("");
@@ -841,36 +950,83 @@ async function sendDiscussionReply(
       `*${MEDIUM_LABEL[medium]}*`
     );
 
-    const mediumButtons: Array<{
-      text: string;
-      url: string;
-    }> = [];
+    const yearLines: string[] = [];
 
     for (const year of sortedYears) {
-      mediumButtons.push({
-        text: year,
-        url: paperUrl(
+      const row: Array<{
+        text: string;
+        url: string;
+      }> = [];
+
+      const parts: string[] = [];
+
+      if (
+        hasDoc(
           subjectId,
           year,
-          medium
-        ),
-      });
+          medium,
+          "paper",
+          keys
+        )
+      ) {
+        row.push({
+          text: `📄 ${year} Paper`,
+          url: paperUrl(
+            subjectId,
+            year,
+            medium,
+            "paper"
+          ),
+        });
+
+        parts.push(
+          `[Paper](${paperUrl(
+            subjectId,
+            year,
+            medium,
+            "paper"
+          )})`
+        );
+      }
+
+      if (
+        hasDoc(
+          subjectId,
+          year,
+          medium,
+          "marking",
+          keys
+        )
+      ) {
+        row.push({
+          text: `📝 ${year} Marking`,
+          url: paperUrl(
+            subjectId,
+            year,
+            medium,
+            "marking"
+          ),
+        });
+
+        parts.push(
+          `[Marking](${paperUrl(
+            subjectId,
+            year,
+            medium,
+            "marking"
+          )})`
+        );
+      }
+
+      if (row.length) {
+        keyboard.push(row);
+        yearLines.push(
+          `• ${year} — ${parts.join(" | ")}`
+        );
+      }
     }
 
-    keyboard.push(mediumButtons);
-
-    lines.push(
-      sortedYears
-        .map(
-          (year) =>
-            `• ${year} — [Paper](${paperUrl(
-              subjectId,
-              year,
-              medium
-            )})`
-        )
-        .join("\n")
-    );
+    lines.push(yearLines.join("\n"));
 
     lines.push("");
   }
@@ -890,6 +1046,161 @@ async function sendDiscussionReply(
       inline_keyboard: keyboard,
     },
   });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Detect year / medium / doc type from a discussion comment
+|--------------------------------------------------------------------------
+*/
+
+function findYearInText(text: string): string | null {
+  const match = text.match(/\b(19|20)\d{2}\b/);
+  return match ? match[0] : null;
+}
+
+const MEDIUM_KEYWORDS: Array<[string[], Medium]> = [
+  [
+    ["sinhala", "සිංහල"],
+    "sinhala",
+  ],
+  [
+    ["english", "ඉංග්‍රීසි", "ඉංග්රීසි"],
+    "english",
+  ],
+  [
+    ["tamil", "දෙමළ", "தமிழ்"],
+    "tamil",
+  ],
+];
+
+function findMediumInText(
+  text: string
+): Medium | null {
+  const normalized = normalize(text);
+
+  for (const [aliases, medium] of MEDIUM_KEYWORDS) {
+    if (
+      aliases.some((alias) =>
+        normalized.includes(normalize(alias))
+      )
+    ) {
+      return medium;
+    }
+  }
+
+  return null;
+}
+
+const MARKING_KEYWORDS = [
+  "marking",
+  "answer",
+  "answers",
+  "scheme",
+  "piliyum",
+  "piliturupatraya",
+  "පිළිතුරු",
+  "පිලිතුරු",
+];
+
+const PAPER_KEYWORDS = [
+  "paper",
+  "question",
+  "prashna",
+  "ප්‍රශ්න",
+  "ප්රශ්න",
+];
+
+function findDocTypeInText(
+  text: string
+): DocType | null {
+  const normalized = normalize(text);
+
+  if (
+    MARKING_KEYWORDS.some((word) =>
+      normalized.includes(normalize(word))
+    )
+  ) {
+    return "marking";
+  }
+
+  if (
+    PAPER_KEYWORDS.some((word) =>
+      normalized.includes(normalize(word))
+    )
+  ) {
+    return "paper";
+  }
+
+  return null;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Direct answer for a specific year/medium/doctype request
+|--------------------------------------------------------------------------
+*/
+
+async function sendDirectDiscussionAnswer(
+  chatId: number | string,
+  messageId: number,
+  subjectId: string,
+  year: string,
+  medium: Medium,
+  docType: DocType,
+  keys: string[]
+): Promise<boolean> {
+  if (
+    !hasDoc(
+      subjectId,
+      year,
+      medium,
+      docType,
+      keys
+    )
+  ) {
+    return false;
+  }
+
+  const subjectName =
+    SUBJECT_NAMES[subjectId] || subjectId;
+
+  const docLabel =
+    docType === "marking"
+      ? "Marking Scheme 📝"
+      : "Question Paper 📄";
+
+  const url = paperUrl(
+    subjectId,
+    year,
+    medium,
+    docType
+  );
+
+  await telegram("sendMessage", {
+    chat_id: chatId,
+    text:
+      `📚 *${subjectName}* — *${year}*\n` +
+      `${MEDIUM_LABEL[medium]}\n` +
+      `🗂️ ${docLabel}\n\n` +
+      "ලබාගැනීමට 👇",
+    parse_mode: "Markdown",
+    disable_web_page_preview: true,
+    reply_to_message_id: messageId,
+    allow_sending_without_reply: true,
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: `📥 Download ${docLabel}`,
+            url,
+          },
+        ],
+      ],
+    },
+  });
+
+  return true;
 }
 
 /*
@@ -1021,11 +1332,38 @@ async function handleCallbackQuery(
     const medium =
       parts[4] as Medium;
 
+    await showDocTypeMenu(
+      chatId,
+      subjectId,
+      year,
+      medium,
+      keys
+    );
+
+    return;
+  }
+
+  /*
+   * DOC TYPE (Paper / Marking)
+   */
+
+  if (data.startsWith("ppz:doctype:")) {
+    const parts =
+      data.split(":");
+
+    const subjectId = parts[2];
+    const year = parts[3];
+    const medium =
+      parts[4] as Medium;
+    const docType =
+      parts[5] as DocType;
+
     await showPaper(
       chatId,
       subjectId,
       year,
       medium,
+      docType,
       keys
     );
 
@@ -1154,16 +1492,75 @@ export async function POST(
         await listPaperKeys();
 
       /*
-       * Send formatted paper post
-       * as a reply to the comment.
+       * If the comment mentions a specific
+       * year + medium (+ optionally paper/marking),
+       * try to answer directly with that single link.
+       * Otherwise fall back to the full list.
        */
 
-      await sendDiscussionReply(
-        chatId,
-        Number(message.message_id),
-        discussionSubject.id,
-        keys
-      );
+      const year =
+        findYearInText(text);
+      const medium =
+        findMediumInText(text);
+      const docType =
+        findDocTypeInText(text);
+
+      let answered = false;
+
+      if (year && medium) {
+        if (docType) {
+          answered =
+            await sendDirectDiscussionAnswer(
+              chatId,
+              Number(message.message_id),
+              discussionSubject.id,
+              year,
+              medium,
+              docType,
+              keys
+            );
+        } else {
+          // Year + medium given but not which doc —
+          // send whichever of paper/marking exist.
+          const paperSent =
+            await sendDirectDiscussionAnswer(
+              chatId,
+              Number(message.message_id),
+              discussionSubject.id,
+              year,
+              medium,
+              "paper",
+              keys
+            );
+
+          const markingSent =
+            await sendDirectDiscussionAnswer(
+              chatId,
+              Number(message.message_id),
+              discussionSubject.id,
+              year,
+              medium,
+              "marking",
+              keys
+            );
+
+          answered = paperSent || markingSent;
+        }
+      }
+
+      /*
+       * Fallback: send the full paper/marking
+       * list for the whole subject.
+       */
+
+      if (!answered) {
+        await sendDiscussionReply(
+          chatId,
+          Number(message.message_id),
+          discussionSubject.id,
+          keys
+        );
+      }
 
       return NextResponse.json({
         ok: true,
