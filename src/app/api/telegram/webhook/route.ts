@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { getR2Bucket } from "@/lib/r2";
-import { ALL_SUBJECTS } from "@/lib/subjects";
+import {
+  ALL_SUBJECTS,
+  OL_SUBJECTS,
+  AL_SUBJECTS,
+} from "@/lib/subjects";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const BASE_URL = "https://pastpaperzone.lk";
+
+const DISCUSSION_CHAT_ID = "-1003769963583";
 
 const MEDIUMS = ["sinhala", "english", "tamil"] as const;
 
@@ -40,7 +46,7 @@ const SUBJECT_NAMES: Record<string, string> = {
   "al-physics": "භෞතික විද්‍යාව",
   "al-chemistry": "රසායන විද්‍යාව",
   "al-biology": "ජීව විද්‍යාව",
-  "al-ict": "තොරතුරු තාක්ෂණය (ICT)",
+  "al-ict": "තොරතුරු තාක්ෂණය",
   "al-accounting": "ගණකාධිකරණය",
   "al-business": "ව්‍යාපාර අධ්‍යයනය",
   "al-econ": "ආර්ථික විද්‍යාව",
@@ -49,419 +55,6 @@ const SUBJECT_NAMES: Record<string, string> = {
   "al-bst": "ජෛව පද්ධති තාක්ෂණවේදය",
   "al-sft": "තාක්ෂණය සඳහා විද්‍යාව",
 };
-
-/*
-|--------------------------------------------------------------------------
-| Subject aliases
-|--------------------------------------------------------------------------
-*/
-
-const ALIASES: Array<[string[], string]> = [
-  [
-    [
-      "ol maths",
-      "o/l maths",
-      "ol math",
-      "o/l math",
-      "maths",
-      "math",
-      "ගණන්",
-      "ගණිතය",
-      "ol ගණිතය",
-      "o/l ගණිතය",
-    ],
-    "ol-maths",
-  ],
-
-  [
-    [
-      "ol science",
-      "o/l science",
-      "science",
-      "විද්‍යාව",
-      "ol විද්‍යාව",
-      "o/l විද්‍යාව",
-    ],
-    "ol-science",
-  ],
-
-  [
-    [
-      "ol sinhala",
-      "o/l sinhala",
-      "sinhala",
-      "සිංහල",
-      "සිංහල පේපර්",
-      "සිංහල භාෂාව",
-      "ol සිංහල",
-      "o/l සිංහල",
-    ],
-    "ol-sinhala",
-  ],
-
-  [
-    [
-      "ol english",
-      "o/l english",
-      "english",
-      "ඉංග්‍රීසි",
-      "ol ඉංග්‍රීසි",
-      "o/l ඉංග්‍රීසි",
-    ],
-    "ol-english",
-  ],
-
-  [
-    [
-      "ol history",
-      "o/l history",
-      "history",
-      "ඉතිහාසය",
-      "ol ඉතිහාසය",
-      "o/l ඉතිහාසය",
-    ],
-    "ol-history",
-  ],
-
-  [
-    ["buddhism", "බුද්ධ ධර්මය", "බුද්ධාගම"],
-    "ol-buddhism",
-  ],
-
-  [
-    ["tamil", "දෙමළ", "දෙමළ භාෂාව"],
-    "ol-tamil",
-  ],
-
-  [
-    ["geography", "භූගෝල විද්‍යාව"],
-    "ol-geography",
-  ],
-
-  [
-    ["civic", "පුරවැසි", "පුරවැසි අධ්‍යාපනය"],
-    "ol-civic",
-  ],
-
-  [
-    ["ol ict", "o/l ict", "ol information technology"],
-    "ol-ict",
-  ],
-
-  [
-    [
-      "al combined maths",
-      "a/l combined maths",
-      "combined maths",
-      "combined math",
-      "සංයුක්ත ගණිතය",
-      "කොම්බයින්",
-      "al සංයුක්ත ගණිතය",
-    ],
-    "al-combined-maths",
-  ],
-
-  [
-    ["physics", "භෞතික විද්‍යාව", "al physics", "a/l physics"],
-    "al-physics",
-  ],
-
-  [
-    ["chemistry", "රසායන විද්‍යාව", "al chemistry", "a/l chemistry"],
-    "al-chemistry",
-  ],
-
-  [
-    ["biology", "ජීව විද්‍යාව", "al biology", "a/l biology"],
-    "al-biology",
-  ],
-
-  [
-    ["al ict", "a/l ict", "al information technology"],
-    "al-ict",
-  ],
-
-  [
-    ["accounting", "ගණකාධිකරණය", "al accounting"],
-    "al-accounting",
-  ],
-
-  [
-    ["business", "ව්‍යාපාර අධ්‍යයනය", "business studies"],
-    "al-business",
-  ],
-
-  [
-    ["economics", "ආර්ථික විද්‍යාව", "economics", "al economics"],
-    "al-econ",
-  ],
-];
-
-/*
-|--------------------------------------------------------------------------
-| Normalize text
-|--------------------------------------------------------------------------
-*/
-
-function normalize(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[“”‘’]/g, "")
-    .replace(/[^\p{L}\p{N}/]+/gu, " ")
-    .trim();
-}
-
-/*
-|--------------------------------------------------------------------------
-| Find subject
-|--------------------------------------------------------------------------
-*/
-
-function findSubject(text: string) {
-  const normalizedText = normalize(text);
-
-  for (const [names, id] of ALIASES) {
-    const found = names.some((name) =>
-      normalizedText.includes(normalize(name))
-    );
-
-    if (found) {
-      return ALL_SUBJECTS.find((subject) => subject.id === id) || null;
-    }
-  }
-
-  return null;
-}
-
-/*
-|--------------------------------------------------------------------------
-| Find year
-|--------------------------------------------------------------------------
-*/
-
-function findYear(text: string) {
-  return text.match(/\b(20\d{2})\b/)?.[1] || null;
-}
-
-/*
-|--------------------------------------------------------------------------
-| Get all papers from R2
-|--------------------------------------------------------------------------
-*/
-
-async function listPaperKeys() {
-  const bucket = await getR2Bucket();
-
-  const keys: string[] = [];
-
-  let cursor: string | undefined;
-
-  do {
-    const page = await bucket.list({
-      prefix: "papers/",
-      cursor,
-    });
-
-    keys.push(...page.objects.map((object) => object.key));
-
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
-
-  return keys.filter((key) =>
-    /^papers\/[^/]+\/20\d{2}\/(sinhala|english|tamil)\/paper\.pdf$/i.test(
-      key
-    )
-  );
-}
-
-/*
-|--------------------------------------------------------------------------
-| Build paper URL
-|--------------------------------------------------------------------------
-*/
-
-function paperPageUrl(
-  level: Level,
-  subjectId: string,
-  year: string,
-  medium: Medium
-) {
-  return `${BASE_URL}/si/papers/${level.toLowerCase()}/${subjectId}/${year}/${medium}`;
-}
-
-/*
-|--------------------------------------------------------------------------
-| Build Telegram paper response
-|--------------------------------------------------------------------------
-|
-| Example:
-|
-| 📚 O/L ගණිතය Past Papers
-|
-| 🇱🇰 සිංහල මාධ්‍ය
-| • 2024 — Paper
-| • 2023 — Paper
-|
-| 🇬🇧 ඉංග්‍රීසි මාධ්‍ය
-| • 2024 — Paper
-|
-| 🇱🇰 දෙමළ මාධ්‍ය
-| • 2024 — Paper
-|
-|--------------------------------------------------------------------------
-*/
-
-function buildPost(
-  subjectId: string,
-  level: Level,
-  keys: string[]
-) {
-  const subjectName =
-    SUBJECT_NAMES[subjectId] || subjectId;
-
-  const yearsByMedium: Record<Medium, string[]> = {
-    sinhala: [],
-    english: [],
-    tamil: [],
-  };
-
-  /*
-   * Read R2 keys
-   */
-  for (const key of keys) {
-    const match = key.match(
-      /^papers\/([^/]+)\/(20\d{2})\/(sinhala|english|tamil)\/paper\.pdf$/i
-    );
-
-    if (!match) continue;
-
-    const keySubjectId = match[1];
-    const year = match[2];
-    const medium = match[3].toLowerCase() as Medium;
-
-    if (keySubjectId !== subjectId) continue;
-
-    if (!yearsByMedium[medium].includes(year)) {
-      yearsByMedium[medium].push(year);
-    }
-  }
-
-  /*
-   * Newest year first
-   */
-  for (const medium of MEDIUMS) {
-    yearsByMedium[medium].sort(
-      (a, b) => Number(b) - Number(a)
-    );
-  }
-
-  const totalYears =
-    yearsByMedium.sinhala.length +
-    yearsByMedium.english.length +
-    yearsByMedium.tamil.length;
-
-  /*
-   * No papers
-   */
-  if (!totalYears) {
-    return (
-      `❌ *${level} ${subjectName}* සඳහා ` +
-      `papers හමු වුණේ නැහැ.`
-    );
-  }
-
-  const lines: string[] = [];
-
-  lines.push(
-    `📚 *${level} ${subjectName} Past Papers*`
-  );
-
-  lines.push("");
-
-  lines.push(
-    "අවශ්‍ය වර්ෂය click කර paper එක ලබාගන්න 👇"
-  );
-
-  lines.push("");
-
-  /*
-   * Sinhala
-   */
-  if (yearsByMedium.sinhala.length > 0) {
-    lines.push(
-      `*${MEDIUM_LABEL.sinhala}*`
-    );
-
-    for (const year of yearsByMedium.sinhala) {
-      const url = paperPageUrl(
-        level,
-        subjectId,
-        year,
-        "sinhala"
-      );
-
-      lines.push(
-        `• [${year} — Paper](${url})`
-      );
-    }
-
-    lines.push("");
-  }
-
-  /*
-   * English
-   */
-  if (yearsByMedium.english.length > 0) {
-    lines.push(
-      `*${MEDIUM_LABEL.english}*`
-    );
-
-    for (const year of yearsByMedium.english) {
-      const url = paperPageUrl(
-        level,
-        subjectId,
-        year,
-        "english"
-      );
-
-      lines.push(
-        `• [${year} — Paper](${url})`
-      );
-    }
-
-    lines.push("");
-  }
-
-  /*
-   * Tamil
-   */
-  if (yearsByMedium.tamil.length > 0) {
-    lines.push(
-      `*${MEDIUM_LABEL.tamil}*`
-    );
-
-    for (const year of yearsByMedium.tamil) {
-      const url = paperPageUrl(
-        level,
-        subjectId,
-        year,
-        "tamil"
-      );
-
-      lines.push(
-        `• [${year} — Paper](${url})`
-      );
-    }
-
-    lines.push("");
-  }
-
-  lines.push(
-    "🌐 [PastPaperZone](https://pastpaperzone.lk)"
-  );
-
-  return lines.join("\n");
-}
 
 /*
 |--------------------------------------------------------------------------
@@ -505,82 +98,944 @@ async function telegram(
 
 /*
 |--------------------------------------------------------------------------
-| Normal private message
+| Send message
 |--------------------------------------------------------------------------
 */
 
 async function sendMessage(
   chatId: number | string,
-  text: string
+  text: string,
+  replyMarkup?: Record<string, unknown>
 ) {
   return telegram("sendMessage", {
     chat_id: chatId,
     text,
     parse_mode: "Markdown",
     disable_web_page_preview: true,
+    ...(replyMarkup
+      ? { reply_markup: replyMarkup }
+      : {}),
   });
 }
 
 /*
 |--------------------------------------------------------------------------
-| Reply to Discussion comment
+| Answer callback
 |--------------------------------------------------------------------------
 */
 
-async function replyToDiscussionComment(
-  chatId: number | string,
-  messageId: number,
-  text: string
+async function answerCallbackQuery(
+  callbackQueryId: string
 ) {
-  return telegram("sendMessage", {
-    chat_id: chatId,
-    text,
-    parse_mode: "Markdown",
-    disable_web_page_preview: true,
-
-    /*
-     * IMPORTANT:
-     * Reply to the exact comment.
-     */
-    reply_to_message_id: messageId,
-
-    /*
-     * If the original comment disappears,
-     * Telegram can still send the reply.
-     */
-    allow_sending_without_reply: true,
+  return telegram("answerCallbackQuery", {
+    callback_query_id: callbackQueryId,
   });
 }
 
 /*
 |--------------------------------------------------------------------------
-| Admin channel post
+| Normalize text
 |--------------------------------------------------------------------------
 */
 
-async function sendChannelPost(
-  subjectId: string,
-  level: Level,
-  keys: string[]
-) {
-  const channelId =
-    process.env.TELEGRAM_CHANNEL_ID;
+function normalize(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[“”‘’]/g, "")
+    .replace(/[^\p{L}\p{N}/]+/gu, " ")
+    .trim();
+}
 
-  if (!channelId) {
-    throw new Error(
-      "TELEGRAM_CHANNEL_ID is not configured"
-    );
+/*
+|--------------------------------------------------------------------------
+| Discussion aliases
+|--------------------------------------------------------------------------
+*/
+
+const DISCUSSION_ALIASES: Array<
+  [string[], string]
+> = [
+  [
+    [
+      "o level maths",
+      "o-level maths",
+      "o/l maths",
+      "ol maths",
+      "o level math",
+      "o/l math",
+      "ol math",
+      "maths",
+      "math",
+      "ගණිතය",
+      "ගණන්",
+    ],
+    "ol-maths",
+  ],
+
+  [
+    [
+      "o level science",
+      "o-level science",
+      "o/l science",
+      "ol science",
+      "science",
+      "විද්‍යාව",
+    ],
+    "ol-science",
+  ],
+
+  [
+    [
+      "o level sinhala",
+      "o-level sinhala",
+      "o/l sinhala",
+      "ol sinhala",
+      "sinhala",
+      "සිංහල",
+      "සිංහල පේපර්",
+    ],
+    "ol-sinhala",
+  ],
+
+  [
+    [
+      "o level english",
+      "o-level english",
+      "o/l english",
+      "ol english",
+      "english",
+      "ඉංග්‍රීසි",
+    ],
+    "ol-english",
+  ],
+
+  [
+    [
+      "o level history",
+      "o-level history",
+      "o/l history",
+      "ol history",
+      "history",
+      "ඉතිහාසය",
+    ],
+    "ol-history",
+  ],
+
+  [
+    [
+      "al physics",
+      "a/l physics",
+      "a level physics",
+      "a-level physics",
+      "physics",
+      "භෞතික විද්‍යාව",
+    ],
+    "al-physics",
+  ],
+
+  [
+    [
+      "al chemistry",
+      "a/l chemistry",
+      "a level chemistry",
+      "a-level chemistry",
+      "chemistry",
+      "රසායන විද්‍යාව",
+    ],
+    "al-chemistry",
+  ],
+
+  [
+    [
+      "al biology",
+      "a/l biology",
+      "a level biology",
+      "a-level biology",
+      "biology",
+      "ජීව විද්‍යාව",
+    ],
+    "al-biology",
+  ],
+
+  [
+    [
+      "al combined maths",
+      "a/l combined maths",
+      "a level combined maths",
+      "a-level combined maths",
+      "combined maths",
+      "combined math",
+      "සංයුක්ත ගණිතය",
+    ],
+    "al-combined-maths",
+  ],
+
+  [
+    [
+      "al ict",
+      "a/l ict",
+      "a level ict",
+      "a-level ict",
+    ],
+    "al-ict",
+  ],
+
+  [
+    [
+      "al accounting",
+      "a/l accounting",
+      "a level accounting",
+      "accounting",
+      "ගණකාධිකරණය",
+    ],
+    "al-accounting",
+  ],
+
+  [
+    [
+      "al business",
+      "a/l business",
+      "a level business",
+      "business studies",
+      "ව්‍යාපාර අධ්‍යයනය",
+    ],
+    "al-business",
+  ],
+
+  [
+    [
+      "al economics",
+      "a/l economics",
+      "a level economics",
+      "economics",
+      "ආර්ථික විද්‍යාව",
+    ],
+    "al-econ",
+  ],
+];
+
+/*
+|--------------------------------------------------------------------------
+| Find subject from Discussion message
+|--------------------------------------------------------------------------
+*/
+
+function findDiscussionSubject(text: string) {
+  const normalized = normalize(text);
+
+  for (const [aliases, subjectId] of DISCUSSION_ALIASES) {
+    if (
+      aliases.some((alias) =>
+        normalized.includes(normalize(alias))
+      )
+    ) {
+      return (
+        ALL_SUBJECTS.find(
+          (subject) => subject.id === subjectId
+        ) || null
+      );
+    }
   }
 
-  return sendMessage(
-    channelId,
-    buildPost(subjectId, level, keys)
+  return null;
+}
+
+/*
+|--------------------------------------------------------------------------
+| R2 papers
+|--------------------------------------------------------------------------
+*/
+
+async function listPaperKeys() {
+  const bucket = await getR2Bucket();
+
+  const keys: string[] = [];
+
+  let cursor: string | undefined;
+
+  do {
+    const page = await bucket.list({
+      prefix: "papers/",
+      cursor,
+    });
+
+    keys.push(
+      ...page.objects.map(
+        (object) => object.key
+      )
+    );
+
+    cursor = page.truncated
+      ? page.cursor
+      : undefined;
+  } while (cursor);
+
+  return keys.filter((key) =>
+    /^papers\/[^/]+\/20\d{2}\/(sinhala|english|tamil)\/paper\.pdf$/i.test(
+      key
+    )
   );
 }
 
 /*
 |--------------------------------------------------------------------------
-| Telegram Webhook
+| Extract paper information
+|--------------------------------------------------------------------------
+*/
+
+function getPaperInfo(key: string) {
+  const match = key.match(
+    /^papers\/([^/]+)\/(20\d{2})\/(sinhala|english|tamil)\/paper\.pdf$/i
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    subjectId: match[1],
+    year: match[2],
+    medium: match[3].toLowerCase() as Medium,
+  };
+}
+
+/*
+|--------------------------------------------------------------------------
+| Get available years
+|--------------------------------------------------------------------------
+*/
+
+function getAvailableYears(
+  subjectId: string,
+  keys: string[]
+) {
+  const years = new Set<string>();
+
+  for (const key of keys) {
+    const info = getPaperInfo(key);
+
+    if (
+      info &&
+      info.subjectId === subjectId
+    ) {
+      years.add(info.year);
+    }
+  }
+
+  return [...years].sort(
+    (a, b) => Number(b) - Number(a)
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Check paper
+|--------------------------------------------------------------------------
+*/
+
+function hasPaper(
+  subjectId: string,
+  year: string,
+  medium: Medium,
+  keys: string[]
+) {
+  return keys.some((key) => {
+    const info = getPaperInfo(key);
+
+    return (
+      info?.subjectId === subjectId &&
+      info.year === year &&
+      info.medium === medium
+    );
+  });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Website paper URL
+|--------------------------------------------------------------------------
+*/
+
+function paperUrl(
+  subjectId: string,
+  year: string,
+  medium: Medium
+) {
+  const subject = ALL_SUBJECTS.find(
+    (item) => item.id === subjectId
+  );
+
+  const level =
+    subject?.level.toLowerCase() || "ol";
+
+  return `${BASE_URL}/si/papers/${level}/${subjectId}/${year}/${medium}`;
+}
+
+/*
+|--------------------------------------------------------------------------
+| /start
+|--------------------------------------------------------------------------
+*/
+
+async function showStartMenu(
+  chatId: number | string
+) {
+  await sendMessage(
+    chatId,
+
+    "👋 *PastPaperZone වෙත සාදරයෙන් පිළිගනිමු!*\n\n" +
+      "ඔබට අවශ්‍ය විභාග මට්ටම තෝරන්න 👇",
+
+    {
+      inline_keyboard: [
+        [
+          {
+            text: "📘 O/L",
+            callback_data: "ppz:level:OL",
+          },
+          {
+            text: "📕 A/L",
+            callback_data: "ppz:level:AL",
+          },
+        ],
+      ],
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Subject menu
+|--------------------------------------------------------------------------
+*/
+
+async function showSubjectMenu(
+  chatId: number | string,
+  level: Level
+) {
+  const subjects =
+    level === "OL"
+      ? OL_SUBJECTS
+      : AL_SUBJECTS;
+
+  const buttons: Array<
+    Array<{
+      text: string;
+      callback_data: string;
+    }>
+  > = [];
+
+  for (
+    let i = 0;
+    i < subjects.length;
+    i += 2
+  ) {
+    const row = [];
+
+    const first = subjects[i];
+
+    row.push({
+      text:
+        SUBJECT_NAMES[first.id] ||
+        first.id,
+      callback_data: `ppz:subject:${first.id}`,
+    });
+
+    if (subjects[i + 1]) {
+      const second = subjects[i + 1];
+
+      row.push({
+        text:
+          SUBJECT_NAMES[second.id] ||
+          second.id,
+        callback_data: `ppz:subject:${second.id}`,
+      });
+    }
+
+    buttons.push(row);
+  }
+
+  await sendMessage(
+    chatId,
+
+    `📚 *${level} Subjects*\n\nවිෂය තෝරන්න 👇`,
+
+    {
+      inline_keyboard: buttons,
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Year menu
+|--------------------------------------------------------------------------
+*/
+
+async function showYearMenu(
+  chatId: number | string,
+  subjectId: string,
+  keys: string[]
+) {
+  const subject =
+    ALL_SUBJECTS.find(
+      (item) => item.id === subjectId
+    );
+
+  if (!subject) {
+    await sendMessage(
+      chatId,
+      "❌ Subject එක හමු වුණේ නැහැ."
+    );
+
+    return;
+  }
+
+  const years = getAvailableYears(
+    subjectId,
+    keys
+  );
+
+  if (!years.length) {
+    await sendMessage(
+      chatId,
+
+      `❌ *${
+        SUBJECT_NAMES[subjectId] ||
+        subjectId
+      }* සඳහා papers හමු වුණේ නැහැ.`
+    );
+
+    return;
+  }
+
+  const buttons: Array<
+    Array<{
+      text: string;
+      callback_data: string;
+    }>
+  > = [];
+
+  for (let i = 0; i < years.length; i += 3) {
+    const row = [];
+
+    for (let j = i; j < i + 3; j++) {
+      if (!years[j]) continue;
+
+      row.push({
+        text: years[j],
+        callback_data: `ppz:year:${subjectId}:${years[j]}`,
+      });
+    }
+
+    buttons.push(row);
+  }
+
+  await sendMessage(
+    chatId,
+
+    `📚 *${
+      SUBJECT_NAMES[subjectId] ||
+      subjectId
+    }*\n\n` +
+      "📅 අවශ්‍ය වර්ෂය තෝරන්න 👇",
+
+    {
+      inline_keyboard: buttons,
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Medium menu
+|--------------------------------------------------------------------------
+*/
+
+async function showMediumMenu(
+  chatId: number | string,
+  subjectId: string,
+  year: string,
+  keys: string[]
+) {
+  const buttons: Array<
+    Array<{
+      text: string;
+      callback_data: string;
+    }>
+  > = [];
+
+  for (const medium of MEDIUMS) {
+    if (
+      hasPaper(
+        subjectId,
+        year,
+        medium,
+        keys
+      )
+    ) {
+      buttons.push([
+        {
+          text: MEDIUM_LABEL[medium],
+          callback_data: `ppz:medium:${subjectId}:${year}:${medium}`,
+        },
+      ]);
+    }
+  }
+
+  if (!buttons.length) {
+    await sendMessage(
+      chatId,
+      "❌ මේ වර්ෂයට paper එකක් හමු වුණේ නැහැ."
+    );
+
+    return;
+  }
+
+  await sendMessage(
+    chatId,
+
+    `📅 *${year}*\n\n` +
+      "🌐 Medium එක තෝරන්න 👇",
+
+    {
+      inline_keyboard: buttons,
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Final paper
+|--------------------------------------------------------------------------
+*/
+
+async function showPaper(
+  chatId: number | string,
+  subjectId: string,
+  year: string,
+  medium: Medium,
+  keys: string[]
+) {
+  if (
+    !hasPaper(
+      subjectId,
+      year,
+      medium,
+      keys
+    )
+  ) {
+    await sendMessage(
+      chatId,
+      "❌ මේ paper එක දැනට available නැහැ."
+    );
+
+    return;
+  }
+
+  const subjectName =
+    SUBJECT_NAMES[subjectId] ||
+    subjectId;
+
+  const url = paperUrl(
+    subjectId,
+    year,
+    medium
+  );
+
+  await sendMessage(
+    chatId,
+
+    `📚 *${subjectName}*\n\n` +
+      `📅 Year: *${year}*\n` +
+      `${MEDIUM_LABEL[medium]}\n\n` +
+      "Paper එක ලබාගැනීමට පහත button එක click කරන්න 👇",
+
+    {
+      inline_keyboard: [
+        [
+          {
+            text: "📄 View / Download Paper",
+            url,
+          },
+        ],
+        [
+          {
+            text: "🌐 Open PastPaperZone",
+            url: BASE_URL,
+          },
+        ],
+      ],
+    }
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Discussion post
+|--------------------------------------------------------------------------
+*/
+
+async function sendDiscussionReply(
+  chatId: number | string,
+  messageId: number,
+  subjectId: string,
+  keys: string[]
+) {
+  const subject =
+    ALL_SUBJECTS.find(
+      (item) => item.id === subjectId
+    );
+
+  if (!subject) return;
+
+  const subjectName =
+    SUBJECT_NAMES[subjectId] ||
+    subjectId;
+
+  const level = subject.level;
+
+  const lines: string[] = [];
+
+  lines.push(
+    `📚 *${level} ${subjectName} Past Papers*`
+  );
+
+  lines.push("");
+
+  lines.push(
+    "පහත අවශ්‍ය මාධ්‍යය සහ වර්ෂය තෝරන්න 👇"
+  );
+
+  lines.push("");
+
+  const keyboard: Array<
+    Array<{
+      text: string;
+      url: string;
+    }>
+  > = [];
+
+  for (const medium of MEDIUMS) {
+    const years = new Set<string>();
+
+    for (const key of keys) {
+      const info = getPaperInfo(key);
+
+      if (
+        info &&
+        info.subjectId === subjectId &&
+        info.medium === medium
+      ) {
+        years.add(info.year);
+      }
+    }
+
+    const sortedYears = [...years].sort(
+      (a, b) => Number(b) - Number(a)
+    );
+
+    if (!sortedYears.length) continue;
+
+    lines.push(
+      `*${MEDIUM_LABEL[medium]}*`
+    );
+
+    const mediumButtons: Array<{
+      text: string;
+      url: string;
+    }> = [];
+
+    for (const year of sortedYears) {
+      mediumButtons.push({
+        text: year,
+        url: paperUrl(
+          subjectId,
+          year,
+          medium
+        ),
+      });
+    }
+
+    keyboard.push(mediumButtons);
+
+    lines.push(
+      sortedYears
+        .map(
+          (year) =>
+            `• ${year} — [Paper](${paperUrl(
+              subjectId,
+              year,
+              medium
+            )})`
+        )
+        .join("\n")
+    );
+
+    lines.push("");
+  }
+
+  lines.push(
+    "🌐 [PastPaperZone](https://pastpaperzone.lk)"
+  );
+
+  await telegram("sendMessage", {
+    chat_id: chatId,
+    text: lines.join("\n"),
+    parse_mode: "Markdown",
+    disable_web_page_preview: true,
+    reply_to_message_id: messageId,
+    allow_sending_without_reply: true,
+    reply_markup: {
+      inline_keyboard: keyboard,
+    },
+  });
+}
+
+/*
+|--------------------------------------------------------------------------
+| Handle callback buttons
+|--------------------------------------------------------------------------
+*/
+
+async function handleCallbackQuery(
+  callbackQuery: any
+) {
+  const callbackId =
+    callbackQuery.id;
+
+  const data =
+    typeof callbackQuery.data === "string"
+      ? callbackQuery.data
+      : "";
+
+  const message =
+    callbackQuery.message;
+
+  if (!message?.chat?.id) {
+    await answerCallbackQuery(
+      callbackId
+    );
+
+    return;
+  }
+
+  const chatId =
+    message.chat.id;
+
+  await answerCallbackQuery(
+    callbackId
+  );
+
+  const keys =
+    await listPaperKeys();
+
+  /*
+   * LEVEL
+   */
+
+  if (data === "ppz:level:OL") {
+    await showSubjectMenu(
+      chatId,
+      "OL"
+    );
+
+    return;
+  }
+
+  if (data === "ppz:level:AL") {
+    await showSubjectMenu(
+      chatId,
+      "AL"
+    );
+
+    return;
+  }
+
+  /*
+   * SUBJECT
+   */
+
+  if (data.startsWith("ppz:subject:")) {
+    const subjectId =
+      data.replace(
+        "ppz:subject:",
+        ""
+      );
+
+    const subject =
+      ALL_SUBJECTS.find(
+        (item) =>
+          item.id === subjectId
+      );
+
+    if (!subject) {
+      await sendMessage(
+        chatId,
+        "❌ Subject එක හමු වුණේ නැහැ."
+      );
+
+      return;
+    }
+
+    await showYearMenu(
+      chatId,
+      subjectId,
+      keys
+    );
+
+    return;
+  }
+
+  /*
+   * YEAR
+   */
+
+  if (data.startsWith("ppz:year:")) {
+    const parts =
+      data.split(":");
+
+    const subjectId = parts[2];
+    const year = parts[3];
+
+    await showMediumMenu(
+      chatId,
+      subjectId,
+      year,
+      keys
+    );
+
+    return;
+  }
+
+  /*
+   * MEDIUM
+   */
+
+  if (data.startsWith("ppz:medium:")) {
+    const parts =
+      data.split(":");
+
+    const subjectId = parts[2];
+    const year = parts[3];
+    const medium =
+      parts[4] as Medium;
+
+    await showPaper(
+      chatId,
+      subjectId,
+      year,
+      medium,
+      keys
+    );
+
+    return;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| POST WEBHOOK
 |--------------------------------------------------------------------------
 */
 
@@ -590,9 +1045,6 @@ export async function POST(
   const webhookSecret =
     process.env.TELEGRAM_WEBHOOK_SECRET;
 
-  /*
-   * Webhook security
-   */
   if (
     webhookSecret &&
     request.headers.get(
@@ -600,21 +1052,42 @@ export async function POST(
     ) !== webhookSecret
   ) {
     return NextResponse.json(
-      { ok: false },
+      {
+        ok: false,
+        error: "Unauthorized",
+      },
       { status: 401 }
     );
   }
 
   try {
-    const update = await request.json();
+    const update =
+      await request.json();
 
     /*
     |--------------------------------------------------------------------------
-    | 1. Get normal Telegram message
+    | CALLBACK QUERY
     |--------------------------------------------------------------------------
     */
 
-    const message = update?.message;
+    if (update?.callback_query) {
+      await handleCallbackQuery(
+        update.callback_query
+      );
+
+      return NextResponse.json({
+        ok: true,
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | NORMAL MESSAGE
+    |--------------------------------------------------------------------------
+    */
+
+    const message =
+      update?.message;
 
     if (!message?.chat?.id) {
       return NextResponse.json({
@@ -622,18 +1095,13 @@ export async function POST(
       });
     }
 
-    const chatId = Number(message.chat.id);
+    const chatId =
+      message.chat.id;
 
     const text =
       typeof message.text === "string"
         ? message.text.trim()
         : "";
-
-    /*
-    |--------------------------------------------------------------------------
-    | 2. Ignore messages without text
-    |--------------------------------------------------------------------------
-    */
 
     if (!text) {
       return NextResponse.json({
@@ -643,130 +1111,58 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | 3. DISCUSSION GROUP
+    | DISCUSSION GROUP
     |--------------------------------------------------------------------------
     |
-    | This is the NEW part.
+    | ONLY Discussion Group messages use this logic.
     |
-    | Example:
-    |
-    | User comment:
-    | O/L Maths
-    |
-    | Bot:
-    | 📚 O/L ගණිතය Past Papers
-    | ...
+    | Private /start is NOT affected.
     |
     */
 
-    const discussionChatId =
-      process.env.TELEGRAM_DISCUSSION_CHAT_ID;
-
     if (
-      discussionChatId &&
       String(chatId) ===
-        String(discussionChatId)
+      DISCUSSION_CHAT_ID
     ) {
       /*
-       * Do not interfere with /start or /help
-       * inside the discussion.
+       * Ignore commands in discussion.
        */
 
       if (
-        /^\/start\b/i.test(text) ||
-        /^\/help\b/i.test(text)
+        text.startsWith("/")
       ) {
-        await sendMessage(
-          chatId,
-          "👋 *PastPaperZone Bot*\n\n" +
-            "📚 Subject එකක් type කරන්න.\n\n" +
-            "`O/L Maths`\n" +
-            "`O/L Sinhala`\n" +
-            "`A/L Physics`"
-        );
-
         return NextResponse.json({
           ok: true,
         });
       }
 
-      /*
-       * /id command
-       *
-       * Useful for finding Discussion Group ID.
-       */
-      if (/^\/id\b/i.test(text)) {
-        await sendMessage(
-          chatId,
-          `🆔 Discussion Chat ID:\n\`${chatId}\``
-        );
+      const discussionSubject =
+        findDiscussionSubject(text);
 
+      /*
+       * Normal discussion comments
+       * are ignored.
+       */
+
+      if (!discussionSubject) {
         return NextResponse.json({
           ok: true,
         });
       }
 
-      /*
-       * Find requested subject
-       */
-      const subject = findSubject(text);
+      const keys =
+        await listPaperKeys();
 
       /*
-       * If user didn't ask for a supported subject,
-       * don't reply.
-       *
-       * This is important because the bot should NOT
-       * reply to every normal discussion comment.
+       * Send formatted paper post
+       * as a reply to the comment.
        */
-      if (!subject) {
-        return NextResponse.json({
-          ok: true,
-        });
-      }
 
-      /*
-       * Get all papers
-       */
-      const keys = await listPaperKeys();
-
-      /*
-       * Optional year
-       *
-       * Example:
-       * O/L Maths 2024
-       *
-       * Then only 2024 will be returned.
-       */
-      const year = findYear(text);
-
-      let filtered = keys.filter((key) =>
-        key.startsWith(
-          `papers/${subject.id}/`
-        )
-      );
-
-      if (year) {
-        filtered = filtered.filter((key) =>
-          key.includes(`/${year}/`)
-        );
-      }
-
-      /*
-       * Build paper response
-       */
-      const responseText = buildPost(
-        subject.id,
-        subject.level as Level,
-        filtered
-      );
-
-      /*
-       * Reply directly to user's comment
-       */
-      await replyToDiscussionComment(
+      await sendDiscussionReply(
         chatId,
         Number(message.message_id),
-        responseText
+        discussionSubject.id,
+        keys
       );
 
       return NextResponse.json({
@@ -776,33 +1172,45 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | 4. PRIVATE BOT / EXISTING FLOW
+    | PRIVATE BOT
     |--------------------------------------------------------------------------
     |
-    | IMPORTANT:
-    | This section is kept separate from the discussion logic.
+    | /start MUST show the original selection flow.
     |
+    */
+
+    if (
+      /^\/start\b/i.test(text)
+    ) {
+      await showStartMenu(
+        chatId
+      );
+
+      return NextResponse.json({
+        ok: true,
+      });
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | /help
     |--------------------------------------------------------------------------
     */
 
-    /*
-     * /start
-     */
     if (
-      /^\/start\b/i.test(text) ||
       /^\/help\b/i.test(text)
     ) {
       await sendMessage(
         chatId,
 
-        "👋 *PastPaperZone Bot*\n\n" +
-          "📚 `O/L Maths`, `O/L Sinhala`, `A/L Physics` වගේ subject එකක් type කරන්න.\n\n" +
-          "උදාහරණ:\n" +
-          "`O/L Sinhala paper`\n" +
-          "`O/L Maths`\n" +
-          "`A/L Physics 2024`\n\n" +
-          "Bot එක available years සහ Sinhala / English / Tamil paper links පෙන්වයි.\n\n" +
-          "Admin channel post: `post O/L Maths`"
+        "📚 *PastPaperZone Bot*\n\n" +
+          "Start button එකෙන් O/L හෝ A/L තෝරන්න.\n\n" +
+          "ඊට පස්සේ:\n" +
+          "1️⃣ Subject\n" +
+          "2️⃣ Year\n" +
+          "3️⃣ Medium\n" +
+          "4️⃣ Paper\n\n" +
+          "📄 Paper එක PastPaperZone website එකෙන් ලබාගන්න පුළුවන්."
       );
 
       return NextResponse.json({
@@ -811,12 +1219,17 @@ export async function POST(
     }
 
     /*
-     * /id
-     */
-    if (/^\/id\b/i.test(text)) {
+    |--------------------------------------------------------------------------
+    | /id
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      /^\/id\b/i.test(text)
+    ) {
       await sendMessage(
         chatId,
-        `🆔 Your Telegram Chat ID:\n\`${chatId}\``
+        `🆔 Chat ID:\n\`${chatId}\``
       );
 
       return NextResponse.json({
@@ -826,18 +1239,16 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | 5. Normal private subject search
+    | /subjects
     |--------------------------------------------------------------------------
     */
 
-    const subject = findSubject(text);
-
-    if (!subject) {
-      await sendMessage(
+    if (
+      /^\/subjects\b/i.test(text)
+    ) {
+      await showSubjectMenu(
         chatId,
-
-        "❓ Subject එක හඳුනාගන්න බැරි වුණා.\n\n" +
-          "උදා: `O/L ගණිතය`, `O/L සිංහල`, `A/L Physics` කියලා type කරන්න."
+        "OL"
       );
 
       return NextResponse.json({
@@ -847,77 +1258,15 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | 6. Get papers
+    | /papers
     |--------------------------------------------------------------------------
     */
 
-    const level = subject.level as Level;
-
-    const keys = await listPaperKeys();
-
-    const year = findYear(text);
-
-    let filtered = keys.filter((key) =>
-      key.startsWith(
-        `papers/${subject.id}/`
-      )
-    );
-
-    /*
-     * If a year was requested,
-     * return that year only.
-     */
-    if (year) {
-      filtered = filtered.filter((key) =>
-        key.includes(`/${year}/`)
-      );
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 7. Admin "post" command
-    |--------------------------------------------------------------------------
-    |
-    | Existing admin function.
-    |
-    | Example:
-    | post O/L Maths
-    |
-    |--------------------------------------------------------------------------
-    */
-
-    if (/^post\b/i.test(text)) {
-      const adminChatId =
-        process.env.TELEGRAM_ADMIN_CHAT_ID;
-
-      if (
-        !adminChatId ||
-        String(chatId) !==
-          String(adminChatId)
-      ) {
-        await sendMessage(
-          chatId,
-          "⛔ Channel post create කරන්න admin account එකට විතරයි අවසර තියෙන්නේ."
-        );
-
-        return NextResponse.json({
-          ok: true,
-        });
-      }
-
-      await sendChannelPost(
-        subject.id,
-        level,
-        filtered
-      );
-
-      await sendMessage(
-        chatId,
-
-        `✅ ${level} ${
-          SUBJECT_NAMES[subject.id] ||
-          subject.id
-        } post එක channel එකට publish කළා.`
+    if (
+      /^\/papers\b/i.test(text)
+    ) {
+      await showStartMenu(
+        chatId
       );
 
       return NextResponse.json({
@@ -927,18 +1276,13 @@ export async function POST(
 
     /*
     |--------------------------------------------------------------------------
-    | 8. Normal private search result
+    | Ignore normal private text
     |--------------------------------------------------------------------------
+    |
+    | We DO NOT automatically search from arbitrary text.
+    | User should use the button flow.
+    |
     */
-
-    await sendMessage(
-      chatId,
-      buildPost(
-        subject.id,
-        level,
-        filtered
-      )
-    );
 
     return NextResponse.json({
       ok: true,
@@ -950,10 +1294,25 @@ export async function POST(
     );
 
     /*
-     * Telegram expects a successful webhook response.
+     * Return 200 so Telegram doesn't endlessly
+     * retry a bad update.
      */
     return NextResponse.json({
       ok: true,
     });
   }
+}
+
+/*
+|--------------------------------------------------------------------------
+| GET health check
+|--------------------------------------------------------------------------
+*/
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    service: "PastPaperZone Telegram Webhook",
+    webhook: "active",
+  });
 }
