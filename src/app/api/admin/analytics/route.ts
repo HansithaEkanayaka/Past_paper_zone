@@ -31,7 +31,7 @@ export async function GET() {
     const tomorrow = new Date(today);
     tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
 
-    const [visits, views, downloads, signups, topDownloads, topViews, reports, requests, contributions] =
+    const [visits, views, downloads, signups, topDownloads, topViews, reports, requests, contributions, telegramDeliveries, telegramTop] =
       await Promise.all([
         admin.from("paper_activity").select("id", { count: "exact", head: true })
           .eq("action", "visit").gte("created_at", today).lt("created_at", tomorrow.toISOString()),
@@ -48,6 +48,10 @@ export async function GET() {
         admin.from("paper_reports").select("*").eq("status", "pending").order("created_at", { ascending: false }).limit(50),
         admin.from("paper_requests").select("*").eq("status", "pending").order("created_at", { ascending: false }).limit(50),
         admin.from("contributions").select("*").eq("status", "pending").order("created_at", { ascending: false }).limit(50),
+        admin.from("telegram_link_deliveries").select("id", { count: "exact", head: true })
+          .gte("created_at", today).lt("created_at", tomorrow.toISOString()),
+        admin.from("telegram_link_deliveries").select("subject_id,year,medium,doc_type,chat_type,language")
+          .gte("created_at", today).lt("created_at", tomorrow.toISOString()),
       ]);
 
     const countRows = (rows: any[] | null) => {
@@ -62,7 +66,7 @@ export async function GET() {
       }).sort((a, b) => b.count - a.count).slice(0, 10);
     };
 
-    const errors = [visits, views, downloads, signups, topDownloads, topViews, reports, requests, contributions]
+    const errors = [visits, views, downloads, signups, topDownloads, topViews, reports, requests, contributions, telegramDeliveries, telegramTop]
       .filter((r) => r.error);
     if (errors.length) {
       console.error("Analytics query error:", errors.map((r) => r.error));
@@ -82,6 +86,12 @@ export async function GET() {
       },
       mostDownloaded: countRows(topDownloads.data),
       mostViewed: countRows(topViews.data),
+      telegramLinksDelivered: telegramDeliveries.count || 0,
+      telegramTopLinks: (telegramTop.data || []).reduce((acc: Record<string, number>, row: any) => {
+        const key = [row.subject_id, row.year, row.medium, row.doc_type].join("|");
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {}),
       reports: reports.data || [],
       requests: requests.data || [],
       contributions: contributions.data || [],

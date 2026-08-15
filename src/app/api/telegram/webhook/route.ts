@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getR2Bucket } from "@/lib/r2";
+import { trackTelegramLinkDelivery } from "@/lib/telegramAnalytics";
 import {
   ALL_SUBJECTS,
   OL_SUBJECTS,
@@ -12,6 +13,101 @@ export const revalidate = 0;
 const BASE_URL = "https://pastpaperzone.lk";
 
 const DISCUSSION_CHAT_ID = "-1003769963583";
+
+type BotLanguage = "sinhala" | "english" | "tamil";
+const languageByChat = new Map<string, BotLanguage>();
+
+function detectLanguage(text: string, telegramCode?: string): BotLanguage {
+  if (telegramCode?.toLowerCase().startsWith("ta")) return "tamil";
+  if (telegramCode?.toLowerCase().startsWith("si")) return "sinhala";
+  if (/[\u0B80-\u0BFF]/u.test(text)) return "tamil";
+  if (/[\u0D80-\u0DFF]/u.test(text)) return "sinhala";
+  if (/[A-Za-z]/.test(text)) return "english";
+  return "sinhala";
+}
+
+const SUBJECT_EN: Record<string,string> = {
+  "ol-maths":"Mathematics","ol-science":"Science","ol-sinhala":"Sinhala Language","ol-english":"English Language",
+  "ol-history":"History","ol-buddhism":"Buddhism","ol-tamil":"Tamil Language","ol-geography":"Geography",
+  "ol-civic":"Civic Education","ol-music":"Music","ol-art":"Art","ol-dancing":"Dancing","ol-drama":"Drama",
+  "ol-ict":"ICT","ol-agriculture":"Agriculture","ol-health":"Health","al-combined-maths":"Combined Mathematics",
+  "al-physics":"Physics","al-chemistry":"Chemistry","al-biology":"Biology","al-ict":"ICT","al-accounting":"Accounting",
+  "al-business":"Business Studies","al-econ":"Economics","al-agro":"Agro Technology","al-et":"Engineering Technology",
+  "al-bst":"Bio Systems Technology","al-sft":"Science for Technology",
+};
+const SUBJECT_TA: Record<string,string> = {
+  "ol-maths":"கணிதம்","ol-science":"விஞ்ஞானம்","ol-sinhala":"சிங்கள மொழி","ol-english":"ஆங்கில மொழி",
+  "ol-history":"வரலாறு","ol-buddhism":"பௌத்தம்","ol-tamil":"தமிழ் மொழி","ol-geography":"புவியியல்",
+  "ol-civic":"குடியியல் கல்வி","ol-music":"இசை","ol-art":"கலை","ol-dancing":"நடனம்","ol-drama":"நாடகம்",
+  "ol-ict":"தகவல் மற்றும் தொடர்பாடல் தொழில்நுட்பம்","ol-agriculture":"விவசாயம்","ol-health":"சுகாதாரம்",
+  "al-combined-maths":"இணைந்த கணிதம்","al-physics":"இயற்பியல்","al-chemistry":"இரசாயனவியல்","al-biology":"உயிரியல்",
+  "al-ict":"தகவல் தொழில்நுட்பம்","al-accounting":"கணக்கியல்","al-business":"வணிகக் கல்வி","al-econ":"பொருளியல்",
+  "al-agro":"விவசாய தொழில்நுட்பம்","al-et":"பொறியியல் தொழில்நுட்பம்","al-bst":"உயிர் அமைப்புகள் தொழில்நுட்பம்",
+  "al-sft":"தொழில்நுட்பத்திற்கான விஞ்ஞானம்",
+};
+
+const TEXT_TRANSLATIONS: Array<[string, string, string]> = [
+  ["👋 *PastPaperZone වෙත සාදරයෙන් පිළිගනිමු!*\\n\\nඔබට අවශ්‍ය විභාග මට්ටම තෝරන්න 👇",
+   "👋 *Welcome to PastPaperZone!*\\n\\nChoose your exam level 👇",
+   "👋 *PastPaperZone වෙත සාදරයෙන් පිළිගනිමු!*\\n\\nඔබට අවශ්‍ය විභාග මට්ටම තෝරන්න 👇"],
+  ["විෂය තෝරන්න 👇","Choose a subject 👇","பாடத்தைத் தேர்ந்தெடுக்கவும் 👇"],
+  ["📅 අවශ්‍ය වර්ෂය තෝරන්න 👇","📅 Choose the required year 👇","📅 தேவையான ஆண்டைத் தேர்ந்தெடுக்கவும் 👇"],
+  ["🌐 Medium එක තෝරන්න 👇","🌐 Choose the medium 👇","🌐 ஊடகத்தைத் தேர்ந்தெடுக்கவும் 👇"],
+  ["🔎 ඔබට ඕන Paper එකද Marking Scheme එකද?","🔎 Do you need the Question Paper or Marking Scheme?","🔎 வினாத்தாளா அல்லது விடைத்திட்டமா தேவை?"],
+  ["ලබාගැනීමට පහත button එක click කරන්න 👇","Click the button below to open/download 👇","கீழே உள்ள பொத்தானை அழுத்தி திறக்கவும்/பதிவிறக்கவும் 👇"],
+  ["ලබාගැනීමට 👇","Open/download below 👇","கீழே திறக்க/பதிவிறக்க 👇"],
+  ["❌ Subject එක හමු වුණේ නැහැ.","❌ Subject not found.","❌ பாடம் கிடைக்கவில்லை."],
+  ["❌ මේ වර්ෂයට paper එකක් හමු වුණේ නැහැ.","❌ No papers were found for this year.","❌ இந்த ஆண்டிற்கான வினாத்தாள்கள் கிடைக்கவில்லை."],
+  ["❌ මේ medium එකට files හමු වුණේ නැහැ.","❌ No files were found for this medium.","❌ இந்த ஊடகத்திற்கான கோப்புகள் கிடைக்கவில்லை."],
+  ["❌ මේ file එක දැනට available නැහැ.","❌ This file is currently unavailable.","❌ இந்த கோப்பு தற்போது கிடைக்கவில்லை."],
+  ["විෂය තෝරන්න","Choose a subject","பாடத்தைத் தேர்ந்தெடுக்கவும்"],
+  ["Start button එකෙන් O/L හෝ A/L තෝරන්න.","Use the Start button to choose O/L or A/L.","Start பொத்தானில் O/L அல்லது A/L ஐத் தேர்ந்தெடுக்கவும்."],
+  ["ඊට පස්සේ:","Then choose:","பின்னர் தேர்ந்தெடுக்கவும்:"],
+  ["Subject","Subject","பாடம்"],
+  ["Year","Year","ஆண்டு"],
+  ["Medium","Medium","ஊடகம்"],
+  ["Paper","Paper","வினாத்தாள்"],
+  ["📄 Paper එක PastPaperZone website එකෙන් ලබාගන්න පුළුවන්.","📄 You can get the paper from the PastPaperZone website.","📄 PastPaperZone இணையதளத்தில் வினாத்தாளைப் பெறலாம்."],
+];
+
+function localizeText(text: string, language: BotLanguage) {
+  if (language === "sinhala") return text;
+  let result = text;
+  for (const [si,en,ta] of TEXT_TRANSLATIONS) result = result.replaceAll(si, language === "english" ? en : ta);
+  if (language === "english") {
+    result = result.replaceAll("Subjects","Subjects").replaceAll("Year","Year").replaceAll("Medium","Medium");
+    result = result.replaceAll("සිංහල මාධ්‍ය","Sinhala Medium").replaceAll("ඉංග්‍රීසි මාධ්‍ය","English Medium").replaceAll("දෙමළ මාධ්‍ය","Tamil Medium");
+    result = result.replaceAll("සිංහල භාෂාව","Sinhala Language").replaceAll("විද්‍යාව","Science").replaceAll("ගණිතය","Mathematics");
+    result = result.replaceAll("පිළිතුරු පත්‍රය","Marking Scheme").replaceAll("ප්‍රශ්න පත්‍රය","Question Paper");
+  } else {
+    result = result.replaceAll("Subjects","பாடங்கள்").replaceAll("Year","ஆண்டு").replaceAll("Medium","ஊடகம்");
+    result = result.replaceAll("සිංහල මාධ්‍ය","சிங்கள ஊடகம்").replaceAll("ඉංග්‍රීසි මාධ්‍ය","ஆங்கில ஊடகம்").replaceAll("දෙමළ මාධ්‍ය","தமிழ் ஊடகம்");
+    result = result.replaceAll("පිළිතුරු පත්‍රය","விடைத்திட்டம்").replaceAll("ප්‍රශ්න පත්‍රය","வினாத்தாள்");
+  }
+  return result;
+}
+
+function localizeMarkup(markup: Record<string, unknown> | undefined, language: BotLanguage) {
+  if (!markup || language === "sinhala") return markup;
+  const clone = JSON.parse(JSON.stringify(markup)) as Record<string, unknown>;
+  const rows = Array.isArray(clone.inline_keyboard) ? clone.inline_keyboard as any[] : [];
+  const labels: Record<string, [string,string]> = {
+    "📘 O/L":["📘 O/L","📘 O/L"], "📕 A/L":["📕 A/L","📕 A/L"],
+    "🌐 Open PastPaperZone":["🌐 Open PastPaperZone","🌐 PastPaperZone திறக்க"],
+    "📄 View / Download Question Paper":["📄 View / Download Question Paper","📄 வினாத்தாளைப் பார்க்க / பதிவிறக்க"],
+    "📥 Download Question Paper 📄":["📥 Download Question Paper","📥 வினாத்தாளைப் பதிவிறக்க"],
+    "📥 Download Marking Scheme 📝":["📥 Download Marking Scheme","📥 விடைத்திட்டத்தைப் பதிவிறக்க"],
+  };
+  for (const row of rows) for (const button of row) {
+    if (button?.callback_data && String(button.callback_data).startsWith("ppz:subject:")) {
+      const subjectId = String(button.callback_data).replace("ppz:subject:", "");
+      button.text = language === "english" ? (SUBJECT_EN[subjectId] || button.text) : (SUBJECT_TA[subjectId] || button.text);
+    } else if (button?.text && labels[button.text]) {
+      button.text = language === "english" ? labels[button.text][0] : labels[button.text][1];
+    }
+  }
+  return clone;
+}
 
 const MEDIUMS = ["sinhala", "english", "tamil"] as const;
 
@@ -107,14 +203,13 @@ async function sendMessage(
   text: string,
   replyMarkup?: Record<string, unknown>
 ) {
+  const language = languageByChat.get(String(chatId)) || "sinhala";
   return telegram("sendMessage", {
     chat_id: chatId,
-    text,
+    text: localizeText(text, language),
     parse_mode: "Markdown",
     disable_web_page_preview: true,
-    ...(replyMarkup
-      ? { reply_markup: replyMarkup }
-      : {}),
+    ...(replyMarkup ? { reply_markup: localizeMarkup(replyMarkup, language) } : {}),
   });
 }
 
@@ -877,6 +972,12 @@ async function showPaper(
       ],
     }
   );
+
+  await trackTelegramLinkDelivery({
+    subjectId, year, medium, docType,
+    chatType: "bot",
+    language: languageByChat.get(String(chatId)) || "sinhala",
+  });
 }
 
 /*
@@ -1035,17 +1136,36 @@ async function sendDiscussionReply(
     "🌐 [PastPaperZone](https://pastpaperzone.lk)"
   );
 
+  const language = languageByChat.get(String(chatId)) || "sinhala";
   await telegram("sendMessage", {
     chat_id: chatId,
-    text: lines.join("\n"),
+    text: localizeText(lines.join("\n"), language),
     parse_mode: "Markdown",
     disable_web_page_preview: true,
     reply_to_message_id: messageId,
     allow_sending_without_reply: true,
-    reply_markup: {
-      inline_keyboard: keyboard,
-    },
+    reply_markup: localizeMarkup({ inline_keyboard: keyboard }, language),
   });
+
+  // Count every actual paper/marking link included in this delivered reply.
+  for (const medium of MEDIUMS) {
+    const years = new Set<string>();
+    for (const key of keys) {
+      const info = getPaperInfo(key);
+      if (info?.subjectId === subjectId && info.medium === medium) years.add(info.year);
+    }
+    for (const year of years) {
+      for (const docType of ["paper", "marking"] as DocType[]) {
+        if (hasDoc(subjectId, year, medium, docType, keys)) {
+          await trackTelegramLinkDelivery({
+            subjectId, year, medium, docType,
+            chatType: "bot",
+            language,
+          });
+        }
+      }
+    }
+  }
 }
 
 /*
@@ -1177,27 +1297,29 @@ async function sendDirectDiscussionAnswer(
     docType
   );
 
+  const language = languageByChat.get(String(chatId)) || "sinhala";
   await telegram("sendMessage", {
     chat_id: chatId,
-    text:
+    text: localizeText(
       `📚 *${subjectName}* — *${year}*\n` +
       `${MEDIUM_LABEL[medium]}\n` +
       `🗂️ ${docLabel}\n\n` +
       "ලබාගැනීමට 👇",
+      language
+    ),
     parse_mode: "Markdown",
     disable_web_page_preview: true,
     reply_to_message_id: messageId,
     allow_sending_without_reply: true,
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: `📥 Download ${docLabel}`,
-            url,
-          },
-        ],
-      ],
-    },
+    reply_markup: localizeMarkup({
+      inline_keyboard: [[{ text: `📥 Download ${docLabel}`, url }]],
+    }, language),
+  });
+
+  await trackTelegramLinkDelivery({
+    subjectId, year, medium, docType,
+    chatType: "bot",
+    language: languageByChat.get(String(chatId)) || "sinhala",
   });
 
   return true;
@@ -1233,6 +1355,8 @@ async function handleCallbackQuery(
 
   const chatId =
     message.chat.id;
+
+  languageByChat.set(String(chatId), detectLanguage("", callbackQuery.from?.language_code));
 
   await answerCallbackQuery(
     callbackId
@@ -1440,6 +1564,8 @@ export async function POST(
       typeof message.text === "string"
         ? message.text.trim()
         : "";
+
+    languageByChat.set(String(chatId), detectLanguage(text, message.from?.language_code));
 
     if (!text) {
       return NextResponse.json({
