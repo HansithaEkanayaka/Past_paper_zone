@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import styles from "./page.module.css";
+import { createTelegramGraphic } from "@/lib/clientTelegramGraphic";
 
 type Paper = {
   key: string;
@@ -55,7 +56,6 @@ type Analytics = {
   views: number;
   downloads: number;
   newUsers: number;
-  telegramLinksDelivered?: number;
 };
 
 type TopPaper = {
@@ -94,7 +94,6 @@ export default function AdminDashboard() {
   });
   const [mostDownloaded, setMostDownloaded] = useState<TopPaper[]>([]);
   const [mostViewed, setMostViewed] = useState<TopPaper[]>([]);
-  const [telegramLinksDelivered, setTelegramLinksDelivered] = useState(0);
 
   const [file, setFile] = useState<File | null>(null);
   const [subjectId, setSubjectId] = useState("ol-maths");
@@ -132,7 +131,6 @@ export default function AdminDashboard() {
         setReports(analyticsData.reports || []);
         setRequests(analyticsData.requests || []);
         setContributions(analyticsData.contributions || []);
-        setTelegramLinksDelivered(Number(analyticsData.telegramLinksDelivered || 0));
       }
     } catch {
       setMessage({ text: "Unable to load dashboard data.", type: "error" });
@@ -198,8 +196,20 @@ export default function AdminDashboard() {
         type: "application/pdf",
       });
 
+      // Generate the final 1200×630 professional PNG in the admin browser.
+      // This keeps image rendering out of the Cloudflare Worker and lets
+      // Telegram receive a real PNG instead of the old static logo.
+      const telegramGraphic = await createTelegramGraphic({
+        subject: subjectId,
+        year,
+        medium: medium as "sinhala" | "english" | "tamil",
+        level: subjectId.startsWith("al-") ? "A/L" : "O/L",
+        docType: docType as "paper" | "marking",
+      });
+
       const formData = new FormData();
       formData.append("file", watermarkedFile);
+      formData.append("telegramGraphic", telegramGraphic, "telegram-post.png");
       formData.append("subjectId", subjectId);
       formData.append("year", year);
       formData.append("medium", medium);
@@ -271,7 +281,6 @@ export default function AdminDashboard() {
     { label: "Paper Views", value: analytics.views, icon: Eye, note: "Today" },
     { label: "Downloads", value: analytics.downloads, icon: Download, note: "Today" },
     { label: "New Users", value: analytics.newUsers, icon: Users, note: "Today" },
-    { label: "Telegram Links", value: telegramLinksDelivered, icon: MessageSquarePlus, note: "Delivered today" },
   ];
 
   return (
@@ -377,17 +386,6 @@ export default function AdminDashboard() {
 
           {section === "overview" && (
             <>
-              <div className={styles.card} style={{ marginBottom: 16 }}>
-                <div className={styles.cardHeader}>
-                  <div>
-                    <h2>Telegram Link Delivery</h2>
-                    <p>How many paper/marking links the bot and channel delivered today</p>
-                  </div>
-                  <MessageSquarePlus size={19} className={styles.orangeIcon} />
-                </div>
-                <div className={styles.bigMetric}>{telegramLinksDelivered.toLocaleString()}</div>
-                <div className={styles.muted}>Links delivered today</div>
-              </div>
               <div className={styles.twoColumns}>
                 <div className={styles.card}>
                   <div className={styles.cardHeader}>
@@ -542,19 +540,10 @@ export default function AdminDashboard() {
           )}
 
           {section === "analytics" && (
-            <>
-              <div className={styles.card} style={{ marginBottom: 16 }}>
-                <div className={styles.cardHeader}>
-                  <div><h2>Telegram Link Delivery</h2><p>Bot + channel link deliveries today</p></div>
-                  <MessageSquarePlus size={19} />
-                </div>
-                <div className={styles.bigMetric}>{telegramLinksDelivered.toLocaleString()}</div>
-              </div>
-              <div className={styles.twoColumns}>
+            <div className={styles.twoColumns}>
               <RankingCard title="Most Downloaded" items={mostDownloaded} color="orange" formatPaper={formatPaper} />
               <RankingCard title="Most Viewed" items={mostViewed} color="blue" formatPaper={formatPaper} />
-              </div>
-            </>
+            </div>
           )}
         </div>
       </main>

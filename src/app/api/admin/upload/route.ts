@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const year = String(formData.get("year") || "");
     const medium = String(formData.get("medium") || "");
     const docType = String(formData.get("docType") || "");
+    const telegramGraphic = formData.get("telegramGraphic");
 
     if (!file) {
       return NextResponse.json(
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
         year,
         medium: medium as "sinhala" | "english" | "tamil",
         docType: docType as "paper" | "marking",
+        graphic: telegramGraphic instanceof File ? telegramGraphic : null,
       });
     } catch (notifyError) {
       console.error("Telegram channel notify failed:", notifyError);
