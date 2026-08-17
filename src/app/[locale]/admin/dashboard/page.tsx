@@ -28,7 +28,9 @@ import {
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import styles from "./page.module.css";
+import { OL_SUBJECTS, AL_SUBJECTS } from "@/lib/subjects";
 import { createTelegramGraphic } from "@/lib/clientTelegramGraphic";
+
 
 type Paper = {
   key: string;
@@ -85,6 +87,46 @@ const nav = [
 ] as const;
 
 type Section = typeof nav[number]["id"];
+
+const SUBJECT_LABELS: Record<string, string> = {
+  "ol-maths": "Mathematics",
+  "ol-science": "Science",
+  "ol-sinhala": "Sinhala Language",
+  "ol-english": "English Language",
+  "ol-history": "History",
+  "ol-buddhism": "Buddhism",
+  "ol-tamil": "Tamil Language",
+  "ol-geography": "Geography",
+  "ol-civic": "Civic Education",
+  "ol-music": "Music",
+  "ol-art": "Art",
+  "ol-dancing": "Dancing",
+  "ol-drama": "Drama & Theatre",
+  "ol-ict": "ICT",
+  "ol-agriculture": "Agriculture",
+  "ol-health": "Health & Physical Education",
+  "al-combined-maths": "Combined Mathematics",
+  "al-physics": "Physics",
+  "al-chemistry": "Chemistry",
+  "al-biology": "Biology",
+  "al-ict": "ICT",
+  "al-accounting": "Accounting",
+  "al-business": "Business Studies",
+  "al-econ": "Economics",
+  "al-agro": "Agricultural Technology",
+  "al-et": "Engineering Technology",
+  "al-bst": "Bio Systems Technology",
+  "al-sft": "Science for Technology",
+};
+
+function subjectLabel(id: string) {
+  return SUBJECT_LABELS[id] || id;
+}
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 2015 }, (_, i) =>
+  String(CURRENT_YEAR - i)
+);
 
 export default function AdminDashboard() {
   const locale = useLocale();
@@ -463,8 +505,29 @@ export default function AdminDashboard() {
                     {editingKey && <button onClick={resetForm} className={styles.cancelEdit}>Cancel</button>}
                   </div>
                   <form onSubmit={handleUpload} className={styles.form}>
-                    <label>Subject ID<input value={subjectId} onChange={(e) => setSubjectId(e.target.value)} placeholder="e.g. al-physics" required /></label>
-                    <label>Year<input value={year} onChange={(e) => setYear(e.target.value)} placeholder="e.g. 2024" required /></label>
+                    <label>
+                      Subject
+                      <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)}>
+                        <optgroup label="O/L">
+                          {OL_SUBJECTS.map((s) => (
+                            <option key={s.id} value={s.id}>{subjectLabel(s.id)}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="A/L">
+                          {AL_SUBJECTS.map((s) => (
+                            <option key={s.id} value={s.id}>{subjectLabel(s.id)}</option>
+                          ))}
+                        </optgroup>
+                      </select>
+                    </label>
+                    <label>
+                      Year
+                      <select value={year} onChange={(e) => setYear(e.target.value)}>
+                        {YEAR_OPTIONS.map((y) => (
+                          <option key={y} value={y}>{y}</option>
+                        ))}
+                      </select>
+                    </label>
                     <label>Medium<select value={medium} onChange={(e) => setMedium(e.target.value)}><option value="sinhala">Sinhala Medium</option><option value="english">English Medium</option><option value="tamil">Tamil Medium</option></select></label>
                     <label>Document type<select value={docType} onChange={(e) => setDocType(e.target.value)}><option value="paper">Question Paper</option><option value="marking">Marking Scheme</option></select></label>
                     <label>PDF file<input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} required /></label>
