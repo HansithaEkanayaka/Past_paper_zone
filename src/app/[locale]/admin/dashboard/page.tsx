@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Clock3,
   ChevronLeft,
+  Send,
 } from "lucide-react";
 import { useLocale } from "next-intl";
 import styles from "./page.module.css";
@@ -66,6 +67,14 @@ type TopPaper = {
   count: number;
 };
 
+type TelegramTopLink = {
+  subjectId: string;
+  year: string;
+  medium: string;
+  docType: string;
+  count: number;
+};
+
 const nav = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "papers", label: "Papers", icon: BookOpen },
@@ -94,6 +103,8 @@ export default function AdminDashboard() {
   });
   const [mostDownloaded, setMostDownloaded] = useState<TopPaper[]>([]);
   const [mostViewed, setMostViewed] = useState<TopPaper[]>([]);
+  const [telegramLinksDelivered, setTelegramLinksDelivered] = useState(0);
+  const [telegramTopLinks, setTelegramTopLinks] = useState<TelegramTopLink[]>([]);
 
   const [file, setFile] = useState<File | null>(null);
   const [subjectId, setSubjectId] = useState("ol-maths");
@@ -128,6 +139,15 @@ export default function AdminDashboard() {
         setAnalytics(analyticsData.stats || { visitors: 0, views: 0, downloads: 0, newUsers: 0 });
         setMostDownloaded(analyticsData.mostDownloaded || []);
         setMostViewed(analyticsData.mostViewed || []);
+        setTelegramLinksDelivered(analyticsData.telegramLinksDelivered || 0);
+        setTelegramTopLinks(
+          Object.entries(analyticsData.telegramTopLinks || {})
+            .map(([key, count]) => {
+              const [subjectId, year, medium, docType] = key.split("|");
+              return { subjectId, year, medium, docType, count: count as number };
+            })
+            .sort((a, b) => b.count - a.count)
+        );
         setReports(analyticsData.reports || []);
         setRequests(analyticsData.requests || []);
         setContributions(analyticsData.contributions || []);
@@ -281,6 +301,7 @@ export default function AdminDashboard() {
     { label: "Paper Views", value: analytics.views, icon: Eye, note: "Today" },
     { label: "Downloads", value: analytics.downloads, icon: Download, note: "Today" },
     { label: "New Users", value: analytics.newUsers, icon: Users, note: "Today" },
+    { label: "Telegram Links Sent", value: telegramLinksDelivered, icon: Send, note: "Today" },
   ];
 
   return (
@@ -540,10 +561,30 @@ export default function AdminDashboard() {
           )}
 
           {section === "analytics" && (
-            <div className={styles.twoColumns}>
-              <RankingCard title="Most Downloaded" items={mostDownloaded} color="orange" formatPaper={formatPaper} />
-              <RankingCard title="Most Viewed" items={mostViewed} color="blue" formatPaper={formatPaper} />
-            </div>
+            <>
+              <div className={styles.twoColumns}>
+                <RankingCard title="Most Downloaded" items={mostDownloaded} color="orange" formatPaper={formatPaper} />
+                <RankingCard title="Most Viewed" items={mostViewed} color="blue" formatPaper={formatPaper} />
+              </div>
+              <div className={styles.card}>
+                <div className={styles.cardHeader}>
+                  <div>
+                    <h2>Most Requested via Telegram</h2>
+                    <p>Top papers/marking schemes the bot has sent links for today</p>
+                  </div>
+                  <Send size={19} className={styles.orangeIcon} />
+                </div>
+                <div className={styles.list}>
+                  {telegramTopLinks.length ? telegramTopLinks.slice(0, 10).map((item, index) => (
+                    <div key={`${item.subjectId}-${item.year}-${item.medium}-${item.docType}`} className={styles.rankRow}>
+                      <span className={styles.rank}>{index + 1}</span>
+                      <span className={styles.rowTitle}>{formatPaper(item)}</span>
+                      <b>{item.count}</b>
+                    </div>
+                  )) : <Empty text="No Telegram bot activity yet today." />}
+                </div>
+              </div>
+            </>
           )}
         </div>
       </main>
