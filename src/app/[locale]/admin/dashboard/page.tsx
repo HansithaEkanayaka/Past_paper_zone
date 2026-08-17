@@ -124,7 +124,7 @@ function subjectLabel(id: string) {
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 2015 }, (_, i) =>
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 2014 }, (_, i) =>
   String(CURRENT_YEAR - i)
 );
 
