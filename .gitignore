@@ -1,11 +1,11 @@
-# Environment Variables (සූක්ෂම තොරතුරු සහ API Keys)
+# Environment Variables 
 .env
 .env*.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Dependencies (විශාල libraries - package.json එකෙන් නැවත install කරගත හැක)
+# Dependencies 
 /node_modules
 /.pnpm-store
 
