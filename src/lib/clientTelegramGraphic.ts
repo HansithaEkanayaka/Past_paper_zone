@@ -15,507 +15,219 @@ const MEDIUM_LABEL: Record<TelegramGraphicOptions["medium"], string> = {
 };
 
 const SUBJECT_NAMES: Record<string, string> = {
-  "ol-maths": "Mathematics",
-  "ol-science": "Science",
-  "ol-sinhala": "Sinhala Language",
-  "ol-english": "English Language",
-  "ol-history": "History",
-  "ol-buddhism": "Buddhism",
-  "ol-tamil": "Tamil Language",
-  "ol-geography": "Geography",
-  "ol-civic": "Civic Education",
-  "ol-music": "Music",
-  "ol-art": "Art",
-  "ol-dancing": "Dancing",
-  "ol-drama": "Drama & Theatre",
-  "ol-ict": "ICT",
-  "ol-agriculture": "Agriculture",
-  "ol-health": "Health",
-  "al-combined-maths": "Combined Mathematics",
-  "al-physics": "Physics",
-  "al-chemistry": "Chemistry",
-  "al-biology": "Biology",
-  "al-ict": "Information Technology",
-  "al-accounting": "Accounting",
-  "al-business": "Business Studies",
-  "al-econ": "Economics",
-  "al-agro": "Agricultural Technology",
-  "al-et": "Engineering Technology",
-  "al-bst": "Bio Systems Technology",
-  "al-sft": "Science for Technology",
+  "ol-maths": "Mathematics", "ol-science": "Science", "ol-sinhala": "Sinhala Language",
+  "ol-english": "English Language", "ol-history": "History", "ol-buddhism": "Buddhism",
+  "ol-tamil": "Tamil Language", "ol-geography": "Geography", "ol-civic": "Civic Education",
+  "ol-music": "Music", "ol-art": "Art", "ol-dancing": "Dancing", "ol-drama": "Drama & Theatre",
+  "ol-ict": "ICT", "ol-agriculture": "Agriculture", "ol-health": "Health",
+  "al-combined-maths": "Combined Mathematics", "al-physics": "Physics", "al-chemistry": "Chemistry",
+  "al-biology": "Biology", "al-ict": "Information Technology", "al-accounting": "Accounting",
+  "al-business": "Business Studies", "al-econ": "Economics", "al-agro": "Agricultural Technology",
+  "al-et": "Engineering Technology", "al-bst": "Bio Systems Technology", "al-sft": "Science for Technology",
 };
 
-function roundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
-  const r = Math.min(radius, width / 2, height / 2);
+const ORANGE = "#f5a300";
+const NAVY = "#03162f";
+const NAVY2 = "#0a2a4d";
+const WHITE = "#ffffff";
+const MUTED = "#c9d5e5";
+
+function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  const rr = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + width, y, x + width, y + height, r);
-  ctx.arcTo(x + width, y + height, x, y + height, r);
-  ctx.arcTo(x, y + height, x, y, r);
-  ctx.arcTo(x, y, x + width, y, r);
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
   ctx.closePath();
 }
 
-function fillRoundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-  color: string
-) {
-  roundedRect(ctx, x, y, width, height, radius);
+function fillRound(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, color: string) {
+  roundedRect(ctx, x, y, w, h, r);
   ctx.fillStyle = color;
   ctx.fill();
 }
 
-function strokeRoundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-  color: string,
-  lineWidth = 2
-) {
-  roundedRect(ctx, x, y, width, height, radius);
+function strokeRound(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number, color: string, width = 2) {
+  roundedRect(ctx, x, y, w, h, r);
   ctx.strokeStyle = color;
-  ctx.lineWidth = lineWidth;
+  ctx.lineWidth = width;
   ctx.stroke();
 }
 
-function fitText(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  maxWidth: number,
-  startSize: number,
-  minSize = 26
-) {
-  let size = startSize;
-
-  while (size > minSize) {
-    ctx.font = `900 ${size}px Arial, Helvetica, sans-serif`;
-    if (ctx.measureText(text).width <= maxWidth) return size;
-    size -= 2;
+function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, size: number, min = 24) {
+  let s = size;
+  while (s > min) {
+    ctx.font = `900 ${s}px Arial, Helvetica, sans-serif`;
+    if (ctx.measureText(text).width <= maxWidth) return s;
+    s -= 2;
   }
-
-  return minSize;
+  return min;
 }
 
 function drawBookIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) {
   ctx.save();
   ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = Math.max(2, size * 0.055);
+  ctx.lineWidth = Math.max(2, size * .055);
   ctx.lineJoin = "round";
-
   ctx.beginPath();
-  ctx.moveTo(x, y + size * 0.12);
-  ctx.quadraticCurveTo(x + size * 0.25, y, x + size * 0.48, y + size * 0.14);
-  ctx.lineTo(x + size * 0.48, y + size * 0.82);
-  ctx.quadraticCurveTo(x + size * 0.23, y + size * 0.68, x, y + size * 0.82);
-  ctx.closePath();
-  ctx.stroke();
-
+  ctx.moveTo(x, y + size * .12);
+  ctx.quadraticCurveTo(x + size * .25, y, x + size * .48, y + size * .14);
+  ctx.lineTo(x + size * .48, y + size * .82);
+  ctx.quadraticCurveTo(x + size * .23, y + size * .68, x, y + size * .82);
+  ctx.closePath(); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x + size * 0.52, y + size * 0.14);
-  ctx.quadraticCurveTo(x + size * 0.75, y, x + size, y + size * 0.12);
-  ctx.lineTo(x + size, y + size * 0.82);
-  ctx.quadraticCurveTo(x + size * 0.77, y + size * 0.68, x + size * 0.52, y + size * 0.82);
-  ctx.closePath();
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(x + size * 0.5, y + size * 0.15);
-  ctx.lineTo(x + size * 0.5, y + size * 0.82);
-  ctx.stroke();
+  ctx.moveTo(x + size * .52, y + size * .14);
+  ctx.quadraticCurveTo(x + size * .75, y, x + size, y + size * .12);
+  ctx.lineTo(x + size, y + size * .82);
+  ctx.quadraticCurveTo(x + size * .77, y + size * .68, x + size * .52, y + size * .82);
+  ctx.closePath(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + size * .5, y + size * .15); ctx.lineTo(x + size * .5, y + size * .82); ctx.stroke();
   ctx.restore();
 }
 
 function drawPaperIcon(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) {
   ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = Math.max(2, size * 0.07);
-  ctx.lineJoin = "round";
-
-  roundedRect(ctx, x, y, size * 0.72, size, size * 0.08);
-  ctx.stroke();
-
+  ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, size * .07); ctx.lineJoin = "round";
+  roundedRect(ctx, x, y, size * .72, size, size * .08); ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(x + size * 0.15, y + size * 0.3);
-  ctx.lineTo(x + size * 0.55, y + size * 0.3);
-  ctx.moveTo(x + size * 0.15, y + size * 0.5);
-  ctx.lineTo(x + size * 0.55, y + size * 0.5);
-  ctx.moveTo(x + size * 0.15, y + size * 0.7);
-  ctx.lineTo(x + size * 0.45, y + size * 0.7);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawBooksIllustration(ctx: CanvasRenderingContext2D, cx: number, cy: number, subject: string, level: string, year: string) {
-  const orange = "#f59e0b";
-  const white = "#ffffff";
-  const navy = "#071a35";
-  const navyLight = "#17385d";
-  const page = "#eef2f7";
-
-  ctx.save();
-
-  // Large soft circular accent behind the books.
-  ctx.beginPath();
-  ctx.arc(cx + 5, cy - 5, 165, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(245,158,11,0.16)";
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(cx + 5, cy - 5, 145, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(245,158,11,0.28)";
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  // Bottom stacked books.
-  const books = [
-    { x: cx - 82, y: cy + 112, w: 225, h: 34, accent: orange },
-    { x: cx - 100, y: cy + 78, w: 250, h: 38, accent: navyLight },
-    { x: cx - 74, y: cy + 45, w: 220, h: 36, accent: orange },
-  ];
-
-  for (const book of books) {
-    ctx.shadowColor = "rgba(0,0,0,0.28)";
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetY = 8;
-    fillRoundedRect(ctx, book.x, book.y, book.w, book.h, 6, book.accent);
-    ctx.shadowColor = "transparent";
-    fillRoundedRect(ctx, book.x + 7, book.y - 4, book.w - 14, book.h - 8, 4, navy);
-    ctx.fillStyle = page;
-    ctx.fillRect(book.x + 15, book.y + 3, book.w - 30, 5);
-  }
-
-  // Main upright book with a slight perspective.
-  ctx.save();
-  ctx.translate(cx - 70, cy - 78);
-  ctx.rotate(-0.055);
-  ctx.shadowColor = "rgba(0,0,0,0.34)";
-  ctx.shadowBlur = 18;
-  ctx.shadowOffsetY = 10;
-  fillRoundedRect(ctx, 0, 0, 270, 205, 9, navy);
-  ctx.shadowColor = "transparent";
-
-  // Spine and cover edge.
-  ctx.fillStyle = "#0d2b4d";
-  ctx.fillRect(0, 0, 18, 205);
-  ctx.strokeStyle = "rgba(255,255,255,0.22)";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(18, 8, 240, 189);
-
-  ctx.fillStyle = white;
-  ctx.textAlign = "center";
-  ctx.font = "900 38px Arial, Helvetica, sans-serif";
-  ctx.fillText(subject.toUpperCase(), 143, 62);
-  ctx.fillStyle = page;
-  ctx.font = "900 25px Arial, Helvetica, sans-serif";
-  ctx.fillText(`${level} ${year}`, 143, 94);
-  ctx.fillStyle = orange;
-  ctx.font = "900 25px Arial, Helvetica, sans-serif";
-  ctx.fillText("QUESTION", 143, 132);
-  ctx.fillText("PAPER", 143, 160);
-
-  // Simple art/study emblem on the book cover.
-  ctx.strokeStyle = "#9aa9bd";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(143, 177, 34, 13, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(121, 174);
-  ctx.quadraticCurveTo(143, 150, 164, 174);
-  ctx.stroke();
-  ctx.restore();
-
-  // White paper sheet behind the pencil.
-  ctx.save();
-  ctx.translate(cx + 112, cy - 15);
-  ctx.rotate(0.035);
-  fillRoundedRect(ctx, 0, 0, 74, 180, 3, "#ffffff");
-  ctx.strokeStyle = "#d7dee8";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(4, 4, 66, 172);
-  ctx.strokeStyle = "#aebbd0";
-  for (let i = 0; i < 6; i++) {
-    ctx.beginPath();
-    ctx.moveTo(13, 38 + i * 20);
-    ctx.lineTo(61, 38 + i * 20);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  // Pencil.
-  ctx.save();
-  ctx.translate(cx + 126, cy + 4);
-  ctx.rotate(0.18);
-  ctx.fillStyle = orange;
-  ctx.fillRect(0, 0, 18, 155);
-  ctx.fillStyle = "#d28a00";
-  ctx.fillRect(0, 0, 5, 155);
-  ctx.fillStyle = "#d9a36a";
-  ctx.beginPath();
-  ctx.moveTo(0, 155);
-  ctx.lineTo(9, 174);
-  ctx.lineTo(18, 155);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = "#202a38";
-  ctx.beginPath();
-  ctx.moveTo(5.5, 165);
-  ctx.lineTo(9, 174);
-  ctx.lineTo(12.5, 165);
-  ctx.closePath();
-  ctx.fill();
-  fillRoundedRect(ctx, -1, -8, 20, 10, 4, "#c9d0da");
-  ctx.restore();
-
-  ctx.restore();
-}
-
-function drawLogo(ctx: CanvasRenderingContext2D) {
-  const orange = "#f59e0b";
-  const white = "#ffffff";
-  const navy = "#06152d";
-
-  fillRoundedRect(ctx, 75, 58, 72, 72, 16, orange);
-
-  drawBookIcon(ctx, 91, 74, 40, navy);
-
-  ctx.textBaseline = "alphabetic";
-  ctx.font = "900 31px Arial, Helvetica, sans-serif";
-  ctx.fillStyle = white;
-  ctx.fillText("PAST", 166, 87);
-
-  ctx.fillStyle = orange;
-  ctx.fillText("PAPER", 166, 119);
-
-  ctx.fillStyle = white;
-  ctx.fillText("ZONE", 314, 119);
-
-  ctx.font = "700 12px Arial, Helvetica, sans-serif";
-  ctx.fillStyle = "#aebbd0";
-  ctx.fillText("YOUR PAST PAPERS, YOUR SUCCESS", 166, 143);
+  ctx.moveTo(x + size * .15, y + size * .3); ctx.lineTo(x + size * .55, y + size * .3);
+  ctx.moveTo(x + size * .15, y + size * .5); ctx.lineTo(x + size * .55, y + size * .5);
+  ctx.moveTo(x + size * .15, y + size * .7); ctx.lineTo(x + size * .45, y + size * .7);
+  ctx.stroke(); ctx.restore();
 }
 
 function drawDots(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  ctx.fillStyle = "#f59e0b";
-  for (let row = 0; row < 3; row++) {
-    for (let col = 0; col < 4; col++) {
-      ctx.beginPath();
-      ctx.arc(x + col * 13, y + row * 13, 2.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
+  for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) {
+    ctx.fillStyle = row === 1 && col === 3 ? WHITE : ORANGE;
+    ctx.beginPath(); ctx.arc(x + col * 13, y + row * 13, 2.4, 0, Math.PI * 2); ctx.fill();
   }
+}
+
+function drawLogo(ctx: CanvasRenderingContext2D) {
+  fillRound(ctx, 68, 58, 88, 88, 18, ORANGE);
+  drawBookIcon(ctx, 88, 78, 48, NAVY);
+  ctx.textAlign = "left";
+  ctx.fillStyle = WHITE; ctx.font = "900 34px Arial, Helvetica, sans-serif"; ctx.fillText("PAST", 185, 92);
+  ctx.fillStyle = ORANGE; ctx.fillText("PAPER", 185, 130);
+  ctx.fillStyle = WHITE; ctx.fillText("ZONE", 365, 130);
+  ctx.fillStyle = MUTED; ctx.font = "700 13px Arial, Helvetica, sans-serif"; ctx.fillText("YOUR PAST PAPERS, YOUR SUCCESS", 185, 154);
 }
 
 function drawDownloadCorner(ctx: CanvasRenderingContext2D) {
   ctx.save();
   ctx.beginPath();
-  ctx.moveTo(850, 30);
-  ctx.lineTo(1145, 30);
-  ctx.lineTo(1145, 158);
-  ctx.bezierCurveTo(1050, 158, 975, 122, 930, 77);
-  ctx.bezierCurveTo(900, 47, 875, 34, 850, 30);
-  ctx.closePath();
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-
-  ctx.fillStyle = "#071a35";
-  ctx.font = "800 17px Arial, Helvetica, sans-serif";
-  ctx.fillText("DOWNLOAD", 884, 70);
-
-  ctx.fillStyle = "#f59e0b";
-  ctx.font = "900 18px Arial, Helvetica, sans-serif";
-  ctx.fillText("FREE PAST PAPERS", 884, 96);
-
-  ctx.fillStyle = "#071a35";
-  ctx.font = "700 13px Arial, Helvetica, sans-serif";
-  ctx.fillText("pastpaperzone.lk", 884, 122);
+  ctx.moveTo(980, 8); ctx.lineTo(1200, 8); ctx.lineTo(1200, 185);
+  ctx.bezierCurveTo(1110, 187, 1030, 157, 980, 115);
+  ctx.bezierCurveTo(950, 90, 930, 40, 980, 8); ctx.closePath();
+  ctx.fillStyle = WHITE; ctx.fill();
+  ctx.fillStyle = NAVY; ctx.font = "900 18px Arial, Helvetica, sans-serif"; ctx.fillText("DOWNLOAD", 1015, 60);
+  ctx.fillStyle = ORANGE; ctx.font = "900 19px Arial, Helvetica, sans-serif"; ctx.fillText("FREE PAST PAPERS", 1015, 88);
+  ctx.fillStyle = NAVY; ctx.font = "700 13px Arial, Helvetica, sans-serif"; ctx.fillText("pastpaperzone.lk", 1015, 116);
   ctx.restore();
 }
 
-function drawCard(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  fill: string,
-  stroke?: string
-) {
-  fillRoundedRect(ctx, x, y, width, height, 14, fill);
-  if (stroke) strokeRoundedRect(ctx, x, y, width, height, 14, stroke, 1.5);
+function drawArtBook(ctx: CanvasRenderingContext2D, options: TelegramGraphicOptions) {
+  // Large 3D book stack, intentionally drawn instead of the old globe.
+  ctx.save();
+  ctx.translate(790, 215);
+  ctx.rotate(-0.035);
+
+  // Back paper.
+  ctx.fillStyle = "#f7f8fb"; ctx.strokeStyle = "#d5deea"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(370, 30); ctx.lineTo(500, 55); ctx.lineTo(465, 430); ctx.lineTo(335, 405); ctx.closePath(); ctx.fill(); ctx.stroke();
+  for (let i = 0; i < 7; i++) { ctx.strokeStyle = "#d8dee8"; ctx.beginPath(); ctx.moveTo(380, 100 + i * 38); ctx.lineTo(465, 116 + i * 38); ctx.stroke(); }
+
+  // Bottom books.
+  fillRound(ctx, 0, 395, 510, 72, 12, "#082a50");
+  fillRound(ctx, 10, 458, 535, 68, 12, ORANGE);
+  ctx.fillStyle = WHITE; ctx.font = "900 22px Arial, Helvetica, sans-serif"; ctx.fillText(options.subject.toUpperCase(), 45, 438);
+  ctx.fillStyle = NAVY; ctx.font = "900 21px Arial, Helvetica, sans-serif"; ctx.fillText(`${options.level} ${options.year}`, 48, 502);
+
+  // Main book cover.
+  ctx.fillStyle = "#06377b"; ctx.strokeStyle = "#1c75d1"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(30, 0); ctx.lineTo(395, 0); ctx.lineTo(425, 390); ctx.lineTo(0, 390); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // Art paint strokes.
+  ctx.strokeStyle = ORANGE; ctx.lineWidth = 16; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(55, 40); ctx.lineTo(110, 5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(315, 50); ctx.lineTo(370, 15); ctx.stroke();
+  ctx.strokeStyle = "#1d8cff"; ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(45, 330); ctx.lineTo(105, 300); ctx.stroke();
+
+  ctx.fillStyle = WHITE; ctx.textAlign = "center";
+  ctx.font = "900 28px Arial, Helvetica, sans-serif"; ctx.fillText(options.level, 210, 80);
+  ctx.font = "900 56px Arial, Helvetica, sans-serif"; ctx.fillText(options.year, 210, 135);
+  ctx.fillStyle = ORANGE; ctx.font = `900 ${fitText(ctx, SUBJECT_NAMES[options.subject] || options.subject, 310, 42, 25)}px Arial, Helvetica, sans-serif`;
+  ctx.fillText(SUBJECT_NAMES[options.subject] || options.subject, 210, 190);
+  ctx.fillStyle = WHITE; ctx.font = "900 25px Arial, Helvetica, sans-serif";
+  ctx.fillText(options.docType === "marking" ? "MARKING SCHEME" : "QUESTION PAPER", 210, 230);
+
+  // Palette + brush.
+  ctx.fillStyle = WHITE; ctx.beginPath(); ctx.ellipse(185, 300, 52, 36, -0.2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#0a3670"; ctx.beginPath(); ctx.arc(200, 300, 10, 0, Math.PI * 2); ctx.fill();
+  for (const p of [[155,295,ORANGE],[175,315,"#246fd4"],[210,275,"#f6c744"],[225,305,"#f06b32"]] as const) { ctx.fillStyle = p[2]; ctx.beginPath(); ctx.arc(p[0], p[1], 7, 0, Math.PI * 2); ctx.fill(); }
+  ctx.strokeStyle = WHITE; ctx.lineWidth = 9; ctx.beginPath(); ctx.moveTo(235, 318); ctx.lineTo(305, 245); ctx.stroke();
+  ctx.strokeStyle = ORANGE; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(285, 265); ctx.lineTo(318, 232); ctx.stroke();
+
+  // Pencil and brushes.
+  ctx.save(); ctx.translate(450, 245); ctx.rotate(0.22); ctx.fillStyle = ORANGE; ctx.fillRect(0, 0, 22, 230); ctx.fillStyle = "#f6d5b0"; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(11,-24); ctx.lineTo(22,0); ctx.closePath(); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = "#1f5b9d"; ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(405, 365); ctx.lineTo(460, 280); ctx.stroke();
+  ctx.strokeStyle = ORANGE; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(455, 365); ctx.lineTo(495, 300); ctx.stroke();
+  ctx.restore();
 }
 
 function renderGraphic(options: TelegramGraphicOptions): HTMLCanvasElement {
-  const width = 1200;
-  const height = 630;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
+  const width = 1200, height = 630;
+  const canvas = document.createElement("canvas"); canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext("2d"); if (!ctx) throw new Error("Canvas is not supported by this browser.");
 
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas is not supported by this browser.");
+  ctx.fillStyle = "#020b18"; ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = ORANGE; ctx.fillRect(0, 0, width, 9); ctx.fillRect(0, height - 9, width, 9);
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 9; fillRound(ctx, 38, 30, 1124, 570, 20, NAVY2); ctx.restore();
+  fillRound(ctx, 38, 30, 10, 570, 5, ORANGE);
 
-  const orange = "#f59e0b";
-  const white = "#ffffff";
-  const light = "#dce4ef";
-  const muted = "#aebbd0";
-  const navy = "#06152d";
-  const navy2 = "#0c2748";
-  const footer = "#06162c";
+  // Curved premium background shapes.
+  const grad = ctx.createRadialGradient(930, 330, 20, 930, 330, 350);
+  grad.addColorStop(0, "rgba(13,80,145,.42)"); grad.addColorStop(1, "rgba(13,80,145,0)");
+  ctx.fillStyle = grad; ctx.fillRect(610, 80, 550, 450);
+  ctx.fillStyle = "rgba(4,24,49,.65)"; ctx.beginPath(); ctx.arc(1020, 350, 250, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(245,163,0,.25)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(1020, 350, 205, 0, Math.PI * 2); ctx.stroke();
 
-  // Background.
-  ctx.fillStyle = "#020b18";
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = orange;
-  ctx.fillRect(0, 0, width, 10);
-  ctx.fillRect(0, height - 10, width, 10);
+  drawLogo(ctx); drawDownloadCorner(ctx); drawDots(ctx, 860, 155); drawDots(ctx, 1090, 510);
 
-  // Main card with subtle shadow.
-  ctx.save();
-  ctx.shadowColor = "rgba(0,0,0,0.38)";
-  ctx.shadowBlur = 26;
-  ctx.shadowOffsetY = 10;
-  fillRoundedRect(ctx, 38, 30, 1124, 570, 20, navy2);
-  ctx.restore();
-
-  fillRoundedRect(ctx, 38, 30, 10, 570, 5, orange);
-
-  // Soft radial-like decoration.
-  const glow = ctx.createRadialGradient(900, 315, 10, 900, 315, 260);
-  glow.addColorStop(0, "rgba(245,158,11,0.16)");
-  glow.addColorStop(1, "rgba(245,158,11,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(650, 70, 500, 500);
-
-  ctx.strokeStyle = "rgba(245,158,11,0.08)";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(895, 330, 175, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.setLineDash([6, 12]);
-  ctx.strokeStyle = "rgba(245,158,11,0.08)";
-  ctx.beginPath();
-  ctx.arc(895, 330, 195, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // Brand.
-  drawLogo(ctx);
-  drawDownloadCorner(ctx);
-
-  // Level badge.
-  drawCard(ctx, 75, 195, 128, 64, orange);
-  ctx.fillStyle = navy;
-  ctx.font = "900 31px Arial, Helvetica, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(options.level, 139, 238);
-  ctx.textAlign = "left";
-
-  // Year.
-  ctx.fillStyle = white;
-  ctx.font = "900 72px Arial, Helvetica, sans-serif";
-  ctx.fillText(options.year, 228, 248);
-
-  // Subject.
-  ctx.fillStyle = orange;
-  ctx.fillRect(75, 285, 580, 4);
+  fillRound(ctx, 68, 195, 145, 74, 17, ORANGE);
+  ctx.fillStyle = NAVY; ctx.font = "900 34px Arial, Helvetica, sans-serif"; ctx.textAlign = "center"; ctx.fillText(options.level, 140, 244); ctx.textAlign = "left";
+  ctx.fillStyle = WHITE; ctx.font = "900 76px Arial, Helvetica, sans-serif"; ctx.fillText(options.year, 245, 252);
+  ctx.fillStyle = ORANGE; ctx.fillRect(68, 285, 585, 4);
 
   const subject = SUBJECT_NAMES[options.subject] || options.subject;
-  const subjectSize = fitText(ctx, subject, 590, 58, 30);
-  ctx.font = `900 ${subjectSize}px Arial, Helvetica, sans-serif`;
-  ctx.fillStyle = white;
-  ctx.fillText(subject, 75, 352);
+  const subjectSize = fitText(ctx, subject, 590, 60, 28);
+  ctx.fillStyle = WHITE; ctx.font = `900 ${subjectSize}px Arial, Helvetica, sans-serif`; ctx.fillText(subject, 68, 352);
 
-  // Medium card.
-  drawCard(ctx, 75, 380, 580, 62, "#102f53", "rgba(245,158,11,0.8)");
-  drawBookIcon(ctx, 98, 395, 30, orange);
-  ctx.fillStyle = light;
-  ctx.font = "800 21px Arial, Helvetica, sans-serif";
-  ctx.fillText(MEDIUM_LABEL[options.medium], 145, 420);
+  fillRound(ctx, 68, 380, 585, 64, 15, "#0c3157"); strokeRound(ctx, 68, 380, 585, 64, 15, ORANGE, 1.5);
+  drawBookIcon(ctx, 97, 396, 32, ORANGE);
+  ctx.fillStyle = WHITE; ctx.font = "900 21px Arial, Helvetica, sans-serif"; ctx.fillText(MEDIUM_LABEL[options.medium], 150, 421);
 
-  // Document type.
-  drawPaperIcon(ctx, 77, 470, 40, orange);
-  ctx.fillStyle = white;
-  ctx.font = "900 24px Arial, Helvetica, sans-serif";
-  ctx.fillText(options.docType === "marking" ? "MARKING SCHEME" : "QUESTION PAPER", 140, 499);
+  drawPaperIcon(ctx, 78, 470, 42, ORANGE);
+  ctx.fillStyle = WHITE; ctx.font = "900 25px Arial, Helvetica, sans-serif"; ctx.fillText(options.docType === "marking" ? "MARKING SCHEME" : "QUESTION PAPER", 140, 500);
 
-  // Education/past-paper illustration.
-  drawBooksIllustration(ctx, 895, 325, subject, options.level, options.year);
-  drawDots(ctx, 748, 218);
-  drawDots(ctx, 1015, 470);
+  drawArtBook(ctx, options);
 
   // Footer.
-  ctx.fillStyle = footer;
-  ctx.fillRect(38, 535, 1124, 65);
-
-  ctx.fillStyle = "#61738c";
-  ctx.fillRect(335, 548, 1, 35);
-  ctx.fillRect(595, 548, 1, 35);
-  ctx.fillRect(845, 548, 1, 35);
-
-  ctx.fillStyle = white;
-  ctx.font = "900 13px Arial, Helvetica, sans-serif";
-  ctx.fillText("RELIABLE", 70, 558);
-  ctx.fillStyle = light;
-  ctx.font = "700 12px Arial, Helvetica, sans-serif";
-  ctx.fillText("TRUSTED", 70, 579);
-
-  ctx.fillStyle = white;
-  ctx.font = "900 15px Arial, Helvetica, sans-serif";
-  ctx.fillText("FREE DOWNLOAD", 382, 571);
-  ctx.fillText("100% SAFE", 640, 571);
-
-  ctx.font = "900 13px Arial, Helvetica, sans-serif";
-  ctx.fillText("PAST PAPERS", 880, 558);
-  ctx.fillStyle = light;
-  ctx.font = "700 12px Arial, Helvetica, sans-serif";
-  ctx.fillText("& MARKING SCHEMES", 880, 579);
-
-  ctx.textAlign = "left";
+  ctx.fillStyle = "#04162d"; ctx.fillRect(38, 535, 1124, 65);
+  ctx.fillStyle = "#5f738c"; ctx.fillRect(335, 548, 1, 35); ctx.fillRect(595, 548, 1, 35); ctx.fillRect(845, 548, 1, 35);
+  ctx.fillStyle = WHITE; ctx.font = "900 13px Arial, Helvetica, sans-serif"; ctx.fillText("RELIABLE", 70, 558); ctx.fillStyle = MUTED; ctx.font = "700 12px Arial, Helvetica, sans-serif"; ctx.fillText("TRUSTED", 70, 579);
+  ctx.fillStyle = WHITE; ctx.font = "900 15px Arial, Helvetica, sans-serif"; ctx.fillText("FREE DOWNLOAD", 382, 571); ctx.fillText("100% SAFE", 640, 571);
+  ctx.font = "900 13px Arial, Helvetica, sans-serif"; ctx.fillText("PAST PAPERS", 880, 558); ctx.fillStyle = MUTED; ctx.font = "700 12px Arial, Helvetica, sans-serif"; ctx.fillText("& MARKING SCHEMES", 880, 579);
   return canvas;
 }
 
 function canvasToPng(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) {
-          reject(new Error("Could not create Telegram PNG."));
-          return;
-        }
-        resolve(blob);
-      },
-      "image/png",
-      1
-    );
-  });
+  return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Could not create Telegram PNG.")), "image/png", 1));
 }
 
-export async function createTelegramGraphic(
-  options: TelegramGraphicOptions
-): Promise<File> {
-  const canvas = renderGraphic(options);
-  const blob = await canvasToPng(canvas);
-
-  return new File([blob], "telegram-post.png", {
-    type: "image/png",
-    lastModified: Date.now(),
-  });
+export async function createTelegramGraphic(options: TelegramGraphicOptions): Promise<File> {
+  const blob = await canvasToPng(renderGraphic(options));
+  return new File([blob], "telegram-post.png", { type: "image/png", lastModified: Date.now() });
 }
