@@ -400,9 +400,6 @@ export default function AdminDashboard() {
           <Link href="https://pastpaperzone.lk" className={styles.backLink}>
             <ChevronLeft size={16} /> Back to website
           </Link>
-          <Link href="/" className={styles.backLink}>
-            <ChevronLeft size={16} /> Back to website
-          </Link>
           <button onClick={handleLogout} disabled={loggingOut} className={styles.logout}>
             <LogOut size={16} />
             {loggingOut ? "Logging out..." : "Logout"}
