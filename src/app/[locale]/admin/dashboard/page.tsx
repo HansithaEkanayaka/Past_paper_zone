@@ -153,6 +153,7 @@ export default function AdminDashboard() {
   const [year, setYear] = useState("2024");
   const [medium, setMedium] = useState("sinhala");
   const [docType, setDocType] = useState("paper");
+  const [part, setPart] = useState<"part1" | "part2">("part1");
   const [search, setSearch] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -224,6 +225,7 @@ export default function AdminDashboard() {
     setYear("2024");
     setMedium("sinhala");
     setDocType("paper");
+    setPart("part1");
     setEditingKey(null);
   };
 
@@ -276,6 +278,9 @@ export default function AdminDashboard() {
       formData.append("year", year);
       formData.append("medium", medium);
       formData.append("docType", docType);
+      if (subjectId.startsWith("al-") && docType === "paper") {
+        formData.append("part", part);
+      }
 
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
       if (res.status === 401) {
@@ -530,6 +535,20 @@ export default function AdminDashboard() {
                     </label>
                     <label>Medium<select value={medium} onChange={(e) => setMedium(e.target.value)}><option value="sinhala">Sinhala Medium</option><option value="english">English Medium</option><option value="tamil">Tamil Medium</option></select></label>
                     <label>Document type<select value={docType} onChange={(e) => setDocType(e.target.value)}><option value="paper">Question Paper</option><option value="marking">Marking Scheme</option></select></label>
+                    {subjectId.startsWith("al-") && docType === "paper" && (
+                      <label>
+                        Part
+                        <select
+                          value={part}
+                          onChange={(e) =>
+                            setPart(e.target.value as "part1" | "part2")
+                          }
+                        >
+                          <option value="part1">Part 1</option>
+                          <option value="part2">Part 2</option>
+                        </select>
+                      </label>
+                    )}
                     <label>PDF file<input type="file" accept="application/pdf" onChange={(e) => setFile(e.target.files?.[0] || null)} required /></label>
                     <p className={styles.helper}>Same subject + year + medium + type will replace the existing PDF.</p>
                     <button disabled={uploading} className={styles.primaryButton}>{uploading ? "Uploading..." : editingKey ? "Replace Paper" : "Add Paper"}</button>

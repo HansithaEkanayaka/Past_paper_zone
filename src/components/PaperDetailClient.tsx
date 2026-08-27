@@ -28,6 +28,7 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
   // straight into the marking-scheme tab instead of always defaulting to paper.
   const initialDocType = searchParams.get("type") === "marking" ? "marking" : "paper";
   const [docType, setDocType] = useState<"paper" | "marking">(initialDocType);
+  const [part, setPart] = useState<"part1" | "part2">("part1");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -44,8 +45,14 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
       type: docType,
       action: "view",
     });
+
+    // Part is only used for A/L question papers
+    if (level === "al" && docType === "paper") {
+      params.set("part", part);
+    }
+
     return `/api/paper?${params.toString()}`;
-  }, [subjectId, year, medium, docType]);
+  }, [subjectId, year, medium, docType, level, part]);
 
   useEffect(() => {
     if (!user) {
@@ -128,6 +135,11 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
       type: docType,
       action: "download",
     });
+
+    if (level === "al" && docType === "paper") {
+      params.set("part", part);
+    }
+
     window.open(`/api/paper?${params.toString()}`, "_blank", "noopener,noreferrer");
   };
 
@@ -209,6 +221,41 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
             </button>
           ))}
         </div>
+        {level === "al" && docType === "paper" && (
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => {
+              setPart("part1");
+              setPreview(false);
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-bold ${
+              part === "part1"
+                ? "bg-[#DD6B20] text-white"
+                : isDarkMode
+                ? "bg-[#2D3748] border border-gray-600 text-white"
+                : "bg-gray-500/10 text-[#1A365D]"
+            }`}
+          >
+            Part 1
+          </button>
+
+          <button
+            onClick={() => {
+              setPart("part2");
+              setPreview(false);
+            }}
+            className={`px-4 py-2 rounded-lg text-sm font-bold ${
+              part === "part2"
+                ? "bg-[#DD6B20] text-white"
+                : isDarkMode
+                ? "bg-[#2D3748] border border-gray-600 text-white"
+                : "bg-gray-500/10 text-[#1A365D]"
+            }`}
+          >
+            Part 2
+          </button>
+        </div>
+      )}
       </div>
 
       {message && (

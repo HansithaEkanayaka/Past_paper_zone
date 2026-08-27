@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const year = String(formData.get("year") || "");
     const medium = String(formData.get("medium") || "");
     const docType = String(formData.get("docType") || "");
+    const part = String(formData.get("part") || "");
     const telegramGraphic = formData.get("telegramGraphic");
 
     if (!file) {
@@ -41,7 +42,23 @@ export async function POST(request: Request) {
     // Keeping pdf-lib out of this Worker is what allows the main Worker
     // bundle to stay within Cloudflare Workers Free's 3 MiB script limit.
     const bytes = await file.arrayBuffer();
-    const key = `papers/${subjectId}/${year}/${medium}/${docType}.pdf`;
+    const isALQuestionPaper =
+      subjectId.startsWith("al-") && docType === "paper";
+
+    let key: string;
+
+    if (isALQuestionPaper) {
+      if (part !== "part1" && part !== "part2") {
+        return NextResponse.json(
+          { error: "Part 1 or Part 2 is required for A/L question papers" },
+          { status: 400 }
+        );
+      }
+
+      key = `papers/${subjectId}/${year}/${medium}/${docType}-${part}.pdf`;
+    } else {
+      key = `papers/${subjectId}/${year}/${medium}/${docType}.pdf`;
+    }
     const bucket = await getR2Bucket();
 
     await bucket.put(key, bytes, {

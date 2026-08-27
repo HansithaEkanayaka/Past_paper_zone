@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   const year = searchParams.get("year");
   const medium = searchParams.get("medium");
   const type = searchParams.get("type");
+  const part = searchParams.get("part");
   const action = searchParams.get("action") === "download" ? "download" : "view";
 
   if (!subject || !year || !medium || !type) {
@@ -27,7 +28,22 @@ export async function GET(request: Request) {
     );
   }
 
-  const key = `papers/${subject}/${year}/${medium}/${type}.pdf`;
+  const isALQuestionPaper = subject.startsWith("al-") && type === "paper";
+
+  let key: string;
+
+  if (isALQuestionPaper) {
+    if (part !== "part1" && part !== "part2") {
+      return NextResponse.json(
+        { error: "Invalid part" },
+        { status: 400 }
+      );
+    }
+
+    key = `papers/${subject}/${year}/${medium}/${type}-${part}.pdf`;
+  } else {
+    key = `papers/${subject}/${year}/${medium}/${type}.pdf`;
+  }
 
   try {
     const bucket = await getR2Bucket();

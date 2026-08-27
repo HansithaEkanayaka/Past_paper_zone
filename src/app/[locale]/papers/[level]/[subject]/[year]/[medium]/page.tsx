@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -107,6 +108,15 @@ export default async function PaperPage({
     <div className="min-h-screen bg-gray-50 dark:bg-[#171923]">
       <Header />
       <main className="w-full max-w-7xl mx-auto py-12 px-4 md:px-8">
+        <div className="mb-6">
+          <Link href="/#subjects-section"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-gray-200 bg-white text-sm font-bold text-[#1A365D] hover:border-[#DD6B20] hover:text-[#DD6B20] transition-all"
+          >
+          <span>←</span>
+          <span>Back to all subjects</span>
+          </Link>
+        </div>
+
         <nav className="text-sm mb-8 opacity-70" aria-label="Breadcrumb">
           <a href={`/${data.locale}`}>Home</a>
           <span className="mx-2">/</span>
