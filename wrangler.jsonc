@@ -16,6 +16,7 @@
   ],
   "routes": [
     { "pattern": "pastpaperzone.lk", "custom_domain": true },
-    { "pattern": "www.pastpaperzone.lk", "custom_domain": true }
+    { "pattern": "www.pastpaperzone.lk", "custom_domain": true },
+    { "pattern": "admin.pastpaperzone.lk", "custom_domain": true }
   ]
 }

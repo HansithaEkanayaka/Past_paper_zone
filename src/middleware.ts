@@ -9,6 +9,7 @@ const intlMiddleware = createMiddleware(routing);
 // Matches "/admin/dashboard" whether or not a locale prefix is present
 // (e.g. "/admin/dashboard", "/en/admin/dashboard", "/si/admin/dashboard/...").
 const ADMIN_DASHBOARD_PATTERN = /^\/(?:(?:en|si|ta)\/)?admin\/dashboard(?:\/|$)/;
+const ADMIN_HOST = "admin.pastpaperzone.lk";
 
 export default async function proxy(request: NextRequest) {
   // 0. Gate the admin dashboard before anything else runs. Previously the
@@ -17,6 +18,26 @@ export default async function proxy(request: NextRequest) {
   // layout, buttons, etc.) rendered for literally anyone who typed in the
   // URL, admin password or not. This is the only place that stops that.
   const { pathname } = request.nextUrl;
+  const hostname = request.headers
+  .get("host")
+  ?.split(":")[0]
+  .toLowerCase();
+
+  if (hostname === ADMIN_HOST && pathname === "/") {
+    const isAuthed = await verifyAdminToken(
+      request.cookies.get(ADMIN_COOKIE_NAME)?.value
+    );
+
+    if (!isAuthed) {
+      const loginUrl = new URL("/en/admin/login", request.url);
+      loginUrl.searchParams.set("from", "/");
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.rewrite(
+      new URL("/en/admin/dashboard", request.url)
+    );
+  }
   if (ADMIN_DASHBOARD_PATTERN.test(pathname)) {
     const isAuthed = await verifyAdminToken(request.cookies.get(ADMIN_COOKIE_NAME)?.value);
     if (!isAuthed) {
