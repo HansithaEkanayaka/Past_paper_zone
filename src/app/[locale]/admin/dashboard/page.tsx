@@ -397,6 +397,9 @@ export default function AdminDashboard() {
         </nav>
 
         <div className={styles.sidebarBottom}>
+          <Link href="https://pastpaperzone.lk" className={styles.backLink}>
+            <ChevronLeft size={16} /> Back to website
+          </Link>
           <Link href="/" className={styles.backLink}>
             <ChevronLeft size={16} /> Back to website
           </Link>
