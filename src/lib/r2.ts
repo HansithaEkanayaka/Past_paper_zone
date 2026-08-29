@@ -9,6 +9,7 @@ export type R2ObjectLike = {
 
 type R2BucketLike = {
   get(key: string): Promise<R2ObjectLike | null>;
+  head(key: string): Promise<R2ObjectLike | null>;
   put(
     key: string,
     value: ArrayBuffer | Uint8Array | ReadableStream,

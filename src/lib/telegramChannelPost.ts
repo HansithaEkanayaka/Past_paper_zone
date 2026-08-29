@@ -112,6 +112,9 @@ export async function notifyChannelNewPaper(params: {
   year: string;
   medium: Medium;
   docType: DocType;
+  // Only meaningful for A/L question papers. "full" (or undefined) means
+  // this subject's paper isn't split into parts.
+  part?: "part1" | "part2" | "full";
   graphic?: File | null;
 }) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
@@ -125,19 +128,30 @@ export async function notifyChannelNewPaper(params: {
     year,
     medium,
     docType,
+    part,
     graphic,
   } = params;
 
   const subject = ALL_SUBJECTS.find((item) => item.id === subjectId);
   const level = subject?.level === "AL" ? "A/L" : "O/L";
   const subjectName = SUBJECT_NAMES[subjectId] || subjectId;
-  const docLabel = docType === "marking" ? "Marking Scheme" : "Question Paper";
-  const docLabelSi = docType === "marking" ? "පිළිතුරු පත්‍රය" : "ප්‍රශ්න පත්‍රය";
+  const isSplitPart = part === "part1" || part === "part2";
+  const docLabel =
+    (docType === "marking" ? "Marking Scheme" : "Question Paper") +
+    (isSplitPart ? ` — ${part === "part1" ? "Part 1" : "Part 2"}` : "");
+  const docLabelSi =
+    (docType === "marking" ? "පිළිතුරු පත්‍රය" : "ප්‍රශ්න පත්‍රය") +
+    (isSplitPart ? ` — ${part === "part1" ? "පළමු කොටස" : "දෙවන කොටස"}` : "");
+
+  const linkParams = new URLSearchParams();
+  if (docType === "marking") linkParams.set("type", "marking");
+  if (isSplitPart) linkParams.set("part", part as string);
+  const query = linkParams.toString();
 
   const paperPageUrl =
     `${BASE_URL}/si/papers/${subject?.level.toLowerCase() || "ol"}` +
     `/${subjectId}/${year}/${medium}` +
-    `${docType === "marking" ? "?type=marking" : ""}`;
+    `${query ? `?${query}` : ""}`;
 
   const discussionLink =
     process.env.TELEGRAM_DISCUSSION_INVITE_LINK || BASE_URL;

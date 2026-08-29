@@ -6,6 +6,7 @@ export type TelegramGraphicOptions = {
   medium: "sinhala" | "english" | "tamil";
   level: "O/L" | "A/L";
   docType: "paper" | "marking";
+  part?: "part1" | "part2" | "full";
 };
 
 const MEDIUM_LABEL: Record<TelegramGraphicOptions["medium"], string> = {
@@ -31,6 +32,13 @@ const NAVY = "#03162f";
 const NAVY2 = "#0a2a4d";
 const WHITE = "#ffffff";
 const MUTED = "#c9d5e5";
+
+function docLabel(options: TelegramGraphicOptions) {
+  const base = options.docType === "marking" ? "MARKING SCHEME" : "QUESTION PAPER";
+  if (options.part === "part1") return `${base} - PART 1`;
+  if (options.part === "part2") return `${base} - PART 2`;
+  return base;
+}
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const rr = Math.min(r, w / 2, h / 2);
@@ -160,8 +168,8 @@ function drawArtBook(ctx: CanvasRenderingContext2D, options: TelegramGraphicOpti
   ctx.font = "900 56px Arial, Helvetica, sans-serif"; ctx.fillText(options.year, 210, 135);
   ctx.fillStyle = ORANGE; ctx.font = `900 ${fitText(ctx, SUBJECT_NAMES[options.subject] || options.subject, 310, 42, 25)}px Arial, Helvetica, sans-serif`;
   ctx.fillText(SUBJECT_NAMES[options.subject] || options.subject, 210, 190);
-  ctx.fillStyle = WHITE; ctx.font = "900 25px Arial, Helvetica, sans-serif";
-  ctx.fillText(options.docType === "marking" ? "MARKING SCHEME" : "QUESTION PAPER", 210, 230);
+  ctx.fillStyle = WHITE; ctx.font = `900 ${fitText(ctx, docLabel(options), 300, 25, 16)}px Arial, Helvetica, sans-serif`;
+  ctx.fillText(docLabel(options), 210, 230);
 
   // Palette + brush.
   ctx.fillStyle = WHITE; ctx.beginPath(); ctx.ellipse(185, 300, 52, 36, -0.2, 0, Math.PI * 2); ctx.fill();
@@ -210,7 +218,7 @@ function renderGraphic(options: TelegramGraphicOptions): HTMLCanvasElement {
   ctx.fillStyle = WHITE; ctx.font = "900 21px Arial, Helvetica, sans-serif"; ctx.fillText(MEDIUM_LABEL[options.medium], 150, 421);
 
   drawPaperIcon(ctx, 78, 470, 42, ORANGE);
-  ctx.fillStyle = WHITE; ctx.font = "900 25px Arial, Helvetica, sans-serif"; ctx.fillText(options.docType === "marking" ? "MARKING SCHEME" : "QUESTION PAPER", 140, 500);
+  ctx.fillStyle = WHITE; ctx.font = `900 ${fitText(ctx, docLabel(options), 480, 25, 16)}px Arial, Helvetica, sans-serif`; ctx.fillText(docLabel(options), 140, 500);
 
   drawArtBook(ctx, options);
 

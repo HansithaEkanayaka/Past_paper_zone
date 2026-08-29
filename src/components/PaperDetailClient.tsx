@@ -20,6 +20,8 @@ const mediumNames = {
   tamil: "Tamil Medium",
 } as const;
 
+type Availability = { full: boolean; part1: boolean; part2: boolean } | null;
+
 export default function PaperDetailClient({ subjectId, subjectName, level, year, medium }: Props) {
   const { user, openLoginModal } = useAuth();
   const { isDarkMode } = useTheme();
@@ -28,7 +30,13 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
   // straight into the marking-scheme tab instead of always defaulting to paper.
   const initialDocType = searchParams.get("type") === "marking" ? "marking" : "paper";
   const [docType, setDocType] = useState<"paper" | "marking">(initialDocType);
-  const [part, setPart] = useState<"part1" | "part2">("part1");
+  // Deep links like ?part=part2 (used by the Telegram bot/channel post) can
+  // preselect a part. Falls back to whatever is actually available once the
+  // availability check below resolves.
+  const initialPart = searchParams.get("part") === "part2" ? "part2" : "part1";
+  const [part, setPart] = useState<"part1" | "part2">(initialPart);
+  const [availability, setAvailability] = useState<Availability>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [preview, setPreview] = useState(false);
@@ -36,6 +44,17 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
   const [reason, setReason] = useState("PDF doesn't open");
   const [details, setDetails] = useState("");
   const [message, setMessage] = useState("");
+
+  // Whether this A/L question paper was uploaded as one single "full" paper
+  // (no Part 1 / Part 2 split) — in that case the Part tabs shouldn't show.
+  const isALQuestionPaper = level === "al" && docType === "paper";
+  const isFullPaper = !isALQuestionPaper || !!availability?.full;
+  const hasParts = isALQuestionPaper && !availability?.full && (!!availability?.part1 || !!availability?.part2);
+  const currentDocAvailable = checkingAvailability
+    ? null
+    : isFullPaper
+    ? !!availability?.full
+    : (part === "part1" ? !!availability?.part1 : !!availability?.part2);
 
   const fileUrl = useMemo(() => {
     const params = new URLSearchParams({
@@ -46,13 +65,52 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
       action: "view",
     });
 
-    // Part is only used for A/L question papers
-    if (level === "al" && docType === "paper") {
+    // Part is only used for A/L question papers that are actually split
+    // into Part 1 / Part 2 — a "full paper" upload is fetched with no part.
+    if (hasParts) {
       params.set("part", part);
     }
 
     return `/api/paper?${params.toString()}`;
-  }, [subjectId, year, medium, docType, level, part]);
+  }, [subjectId, year, medium, docType, part, hasParts]);
+
+  // Check what's actually uploaded for this subject/year/medium/docType
+  // before showing Preview/Download or a Part 1 / Part 2 picker — this is
+  // what lets a "full paper" subject show as one paper (no Part tabs) and
+  // an unavailable paper show a clean message instead of a broken preview.
+  useEffect(() => {
+    let cancelled = false;
+    setCheckingAvailability(true);
+
+    const params = new URLSearchParams({ subject: subjectId, year, medium, type: docType });
+    fetch(`/api/paper/availability?${params.toString()}`, { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.success) {
+          const next: Availability = { full: !!data.full, part1: !!data.part1, part2: !!data.part2 };
+          setAvailability(next);
+          // If the part we currently have selected isn't the one that's
+          // actually available, switch to whichever one is.
+          if (level === "al" && docType === "paper" && !next.full) {
+            if (next.part1 && !next.part2) setPart("part1");
+            else if (next.part2 && !next.part1) setPart("part2");
+          }
+        } else {
+          setAvailability(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setAvailability(null);
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingAvailability(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [subjectId, year, medium, docType, level]);
 
   useEffect(() => {
     if (!user) {
@@ -136,7 +194,7 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
       action: "download",
     });
 
-    if (level === "al" && docType === "paper") {
+    if (hasParts) {
       params.set("part", part);
     }
 
@@ -167,12 +225,17 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
         </p>
 
         <div className="flex flex-wrap gap-3 mt-7">
-          <button onClick={openPaper} className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#DD6B20] text-white font-bold">
+          <button
+            onClick={openPaper}
+            disabled={currentDocAvailable === false}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-[#DD6B20] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <Eye size={18} /> Preview
           </button>
           <button
             onClick={downloadPaper}
-            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold ${
+            disabled={currentDocAvailable === false}
+            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl border font-bold disabled:opacity-50 disabled:cursor-not-allowed ${
               isDarkMode
                 ? "bg-[#2D3748] border-gray-600 text-white hover:border-[#DD6B20]"
                 : "bg-white border-gray-300 text-[#1A365D] hover:border-[#DD6B20]"
@@ -221,7 +284,7 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
             </button>
           ))}
         </div>
-        {level === "al" && docType === "paper" && (
+        {hasParts && (
         <div className="flex gap-2 mt-4">
           <button
             onClick={() => {
@@ -264,7 +327,20 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
         </div>
       )}
 
-      {preview && (
+      {!checkingAvailability && currentDocAvailable === false && (
+        <div className={`rounded-2xl border p-6 text-center ${
+          isDarkMode ? "bg-[#2D3748] border-gray-700 text-gray-300" : "bg-gray-50 border-gray-200 text-gray-600"
+        }`}>
+          <p className="font-bold">
+            {docType === "paper" ? "This question paper" : "This marking scheme"} isn&apos;t uploaded yet.
+          </p>
+          <p className="text-sm mt-1 opacity-80">
+            Please check back later, or use the Report button to let us know you were looking for it.
+          </p>
+        </div>
+      )}
+
+      {preview && currentDocAvailable && (
         <div className={`rounded-2xl border overflow-hidden ${isDarkMode ? "bg-[#2D3748] border-gray-700" : "bg-white border-gray-200"}`}>
           <div className="flex items-center justify-between gap-4 p-4 border-b">
             <strong>{docType === "paper" ? "Question Paper" : "Marking Scheme"} Preview</strong>

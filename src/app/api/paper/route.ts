@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   let key: string;
 
-  if (isALQuestionPaper) {
+  if (isALQuestionPaper && part && part !== "full") {
     if (part !== "part1" && part !== "part2") {
       return NextResponse.json(
         { error: "Invalid part" },

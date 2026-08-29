@@ -48,14 +48,20 @@ export async function POST(request: Request) {
     let key: string;
 
     if (isALQuestionPaper) {
-      if (part !== "part1" && part !== "part2") {
+      if (part !== "part1" && part !== "part2" && part !== "full") {
         return NextResponse.json(
-          { error: "Part 1 or Part 2 is required for A/L question papers" },
+          { error: "Part 1, Part 2, or Full Paper is required for A/L question papers" },
           { status: 400 }
         );
       }
 
-      key = `papers/${subjectId}/${year}/${medium}/${docType}-${part}.pdf`;
+      // "full" means this subject's question paper isn't split into parts —
+      // store it the same way a normal (non-part) paper is stored, so it's
+      // shown as one single paper instead of Part 1 / Part 2 tabs.
+      key =
+        part === "full"
+          ? `papers/${subjectId}/${year}/${medium}/${docType}.pdf`
+          : `papers/${subjectId}/${year}/${medium}/${docType}-${part}.pdf`;
     } else {
       key = `papers/${subjectId}/${year}/${medium}/${docType}.pdf`;
     }
@@ -73,6 +79,7 @@ export async function POST(request: Request) {
         year,
         medium: medium as "sinhala" | "english" | "tamil",
         docType: docType as "paper" | "marking",
+        part: isALQuestionPaper ? (part as "part1" | "part2" | "full") : undefined,
         graphic: telegramGraphic instanceof File ? telegramGraphic : null,
       });
     } catch (notifyError) {

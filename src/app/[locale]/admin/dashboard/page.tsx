@@ -153,7 +153,7 @@ export default function AdminDashboard() {
   const [year, setYear] = useState("2024");
   const [medium, setMedium] = useState("sinhala");
   const [docType, setDocType] = useState("paper");
-  const [part, setPart] = useState<"part1" | "part2">("part1");
+  const [part, setPart] = useState<"part1" | "part2" | "full">("part1");
   const [search, setSearch] = useState("");
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -233,7 +233,20 @@ export default function AdminDashboard() {
     setSubjectId(paper.subjectId);
     setYear(paper.year);
     setMedium(paper.medium);
-    setDocType(paper.docType);
+
+    // paper.docType is the raw R2 key segment, e.g. "paper", "marking",
+    // "paper-part1" or "paper-part2" — split it into the base docType
+    // (used by the "Document type" select) and the part (used by the
+    // Part 1 / Part 2 / Full Paper select).
+    const partMatch = paper.docType.match(/^(paper|marking)-(part1|part2)$/);
+    if (partMatch) {
+      setDocType(partMatch[1]);
+      setPart(partMatch[2] as "part1" | "part2");
+    } else {
+      setDocType(paper.docType);
+      setPart("full");
+    }
+
     setEditingKey(paper.key);
     setFile(null);
     setSection("papers");
@@ -269,6 +282,7 @@ export default function AdminDashboard() {
         medium: medium as "sinhala" | "english" | "tamil",
         level: subjectId.startsWith("al-") ? "A/L" : "O/L",
         docType: docType as "paper" | "marking",
+        part: subjectId.startsWith("al-") && docType === "paper" ? part : undefined,
       });
 
       const formData = new FormData();
@@ -541,9 +555,10 @@ export default function AdminDashboard() {
                         <select
                           value={part}
                           onChange={(e) =>
-                            setPart(e.target.value as "part1" | "part2")
+                            setPart(e.target.value as "part1" | "part2" | "full")
                           }
                         >
+                          <option value="full">Full Paper (no Part 1/2 split)</option>
                           <option value="part1">Part 1</option>
                           <option value="part2">Part 2</option>
                         </select>
