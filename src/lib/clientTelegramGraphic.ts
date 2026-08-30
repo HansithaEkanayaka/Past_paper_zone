@@ -9,14 +9,22 @@ export type TelegramGraphicOptions = {
   part?: "part1" | "part2" | "full";
 };
 
+/*
+|--------------------------------------------------------------------------
+| Subject names
+|--------------------------------------------------------------------------
+*/
+
 const SUBJECT_NAMES: Record<string, string> = {
+  // O/L
   "ol-maths": "Mathematics",
+  "ol-mathematics": "Mathematics",
   "ol-science": "Science",
-  "ol-sinhala": "Sinhala Language",
-  "ol-english": "English Language",
+  "ol-sinhala": "Sinhala",
+  "ol-english": "English",
   "ol-history": "History",
   "ol-buddhism": "Buddhism",
-  "ol-tamil": "Tamil Language",
+  "ol-tamil": "Tamil",
   "ol-geography": "Geography",
   "ol-civic": "Civic Education",
   "ol-music": "Music",
@@ -27,7 +35,9 @@ const SUBJECT_NAMES: Record<string, string> = {
   "ol-agriculture": "Agriculture",
   "ol-health": "Health",
 
+  // A/L
   "al-combined-maths": "Combined Mathematics",
+  "al-combined-mathematics": "Combined Mathematics",
   "al-physics": "Physics",
   "al-chemistry": "Chemistry",
   "al-biology": "Biology",
@@ -35,11 +45,19 @@ const SUBJECT_NAMES: Record<string, string> = {
   "al-accounting": "Accounting",
   "al-business": "Business Studies",
   "al-econ": "Economics",
-  "al-agro": "Agricultural Technology",
+  "al-economics": "Economics",
+  "al-agro": "Agricultural Science",
+  "al-agriculture": "Agricultural Science",
   "al-et": "Engineering Technology",
   "al-bst": "Bio Systems Technology",
   "al-sft": "Science for Technology",
 };
+
+/*
+|--------------------------------------------------------------------------
+| Medium labels
+|--------------------------------------------------------------------------
+*/
 
 const MEDIUM_LABEL: Record<
   TelegramGraphicOptions["medium"],
@@ -50,50 +68,88 @@ const MEDIUM_LABEL: Record<
   tamil: "TAMIL MEDIUM",
 };
 
-function getSubjectName(subject: string) {
-  return SUBJECT_NAMES[subject] || subject;
+/*
+|--------------------------------------------------------------------------
+| Helpers
+|--------------------------------------------------------------------------
+*/
+
+function getSubjectName(subject: string): string {
+  const knownName = SUBJECT_NAMES[subject];
+
+  if (knownName) {
+    return knownName;
+  }
+
+  /*
+   * Fallback:
+   * ol-maths -> Maths
+   * al-physics -> Physics
+   */
+  return subject
+    .replace(/^ol-/i, "")
+    .replace(/^al-/i, "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function getDocumentLabel(options: TelegramGraphicOptions) {
-  const base =
+function getDocumentLabel(
+  options: TelegramGraphicOptions
+): string {
+  let label =
     options.docType === "marking"
       ? "MARKING SCHEME"
       : "QUESTION PAPER";
 
   if (options.part === "part1") {
-    return `${base} • PART 1`;
+    label += " • PART 1";
   }
 
   if (options.part === "part2") {
-    return `${base} • PART 2`;
+    label += " • PART 2";
   }
 
-  return base;
+  return label;
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
 
-    image.onload = () => resolve(image);
-    image.onerror = () =>
-      reject(new Error(`Unable to load image: ${src}`));
+    image.onload = () => {
+      resolve(image);
+    };
+
+    image.onerror = () => {
+      reject(
+        new Error(
+          `Unable to load Telegram template image: ${src}`
+        )
+      );
+    };
 
     image.src = src;
   });
 }
+
+/*
+|--------------------------------------------------------------------------
+| Find the largest font size that fits inside maxWidth
+|--------------------------------------------------------------------------
+*/
 
 function fitText(
   ctx: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
   startingSize: number,
-  minimumSize = 28
-) {
+  minimumSize = 18,
+  fontWeight = 900
+): number {
   let size = startingSize;
 
   while (size > minimumSize) {
-    ctx.font = `900 ${size}px Arial, Helvetica, sans-serif`;
+    ctx.font = `${fontWeight} ${size}px Arial, Helvetica, sans-serif`;
 
     if (ctx.measureText(text).width <= maxWidth) {
       return size;
@@ -105,69 +161,147 @@ function fitText(
   return minimumSize;
 }
 
-function drawTextWithShadow(
+/*
+|--------------------------------------------------------------------------
+| Draw centered text
+|--------------------------------------------------------------------------
+*/
+
+function drawCenteredText(
   ctx: CanvasRenderingContext2D,
   text: string,
-  x: number,
-  y: number,
-  font: string,
+  centerX: number,
+  baselineY: number,
+  maxWidth: number,
+  startingSize: number,
   color: string,
-  align: CanvasTextAlign = "left"
+  fontWeight = 900,
+  minimumSize = 18
 ) {
+  const fontSize = fitText(
+    ctx,
+    text,
+    maxWidth,
+    startingSize,
+    minimumSize,
+    fontWeight
+  );
+
   ctx.save();
 
-  ctx.font = font;
-  ctx.textAlign = align;
-  ctx.textBaseline = "alphabetic";
-
-  ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
-  ctx.shadowBlur = 8;
-  ctx.shadowOffsetX = 2;
-  ctx.shadowOffsetY = 3;
+  ctx.font = `${fontWeight} ${fontSize}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
 
   ctx.fillStyle = color;
-  ctx.fillText(text, x, y);
+
+  /*
+   * Small shadow for readability.
+   */
+  ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+  ctx.shadowBlur = 5;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+
+  ctx.fillText(
+    text,
+    centerX,
+    baselineY,
+    maxWidth
+  );
 
   ctx.restore();
 }
 
-function drawRoundedBox(
+/*
+|--------------------------------------------------------------------------
+| Draw left aligned text
+|--------------------------------------------------------------------------
+*/
+
+function drawLeftText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  centerY: number,
+  maxWidth: number,
+  startingSize: number,
+  color: string,
+  fontWeight = 900,
+  minimumSize = 18
+) {
+  const fontSize = fitText(
+    ctx,
+    text,
+    maxWidth,
+    startingSize,
+    minimumSize,
+    fontWeight
+  );
+
+  ctx.save();
+
+  ctx.font = `${fontWeight} ${fontSize}px Arial, Helvetica, sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = color;
+
+  ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+  ctx.shadowBlur = 5;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 2;
+
+  ctx.fillText(
+    text,
+    x,
+    centerY,
+    maxWidth
+  );
+
+  ctx.restore();
+}
+
+/*
+|--------------------------------------------------------------------------
+| Cover an existing template area
+|--------------------------------------------------------------------------
+*/
+
+function coverArea(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   width: number,
   height: number,
-  radius: number,
-  fill: string,
-  stroke?: string
+  fill: string
 ) {
   ctx.save();
 
-  ctx.beginPath();
+  ctx.fillStyle = fill;
 
-  ctx.roundRect(
+  ctx.fillRect(
     x,
     y,
     width,
-    height,
-    radius
+    height
   );
-
-  ctx.fillStyle = fill;
-  ctx.fill();
-
-  if (stroke) {
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
 
   ctx.restore();
 }
 
+/*
+|--------------------------------------------------------------------------
+| Main renderer
+|--------------------------------------------------------------------------
+*/
+
 async function renderGraphic(
   options: TelegramGraphicOptions
 ): Promise<HTMLCanvasElement> {
+  /*
+   * Template size
+   */
   const WIDTH = 1536;
   const HEIGHT = 1024;
 
@@ -179,13 +313,15 @@ async function renderGraphic(
   const ctx = canvas.getContext("2d");
 
   if (!ctx) {
-    throw new Error("Canvas is not supported.");
+    throw new Error(
+      "Canvas 2D context is not supported."
+    );
   }
 
   /*
-   * ---------------------------------------------------------
-   * 1. LOAD PREMIUM TEMPLATE
-   * ---------------------------------------------------------
+   * --------------------------------------------------------------
+   * LOAD TEMPLATE
+   * --------------------------------------------------------------
    */
 
   const template = await loadImage(
@@ -193,7 +329,7 @@ async function renderGraphic(
   );
 
   /*
-   * Draw template as the complete background.
+   * Draw the complete template.
    */
 
   ctx.drawImage(
@@ -205,12 +341,13 @@ async function renderGraphic(
   );
 
   /*
-   * ---------------------------------------------------------
-   * 2. DYNAMIC DATA
-   * ---------------------------------------------------------
+   * --------------------------------------------------------------
+   * DATA
+   * --------------------------------------------------------------
    */
 
-  const subject = getSubjectName(options.subject);
+  const subject =
+    getSubjectName(options.subject);
 
   const medium =
     MEDIUM_LABEL[options.medium];
@@ -219,270 +356,202 @@ async function renderGraphic(
     getDocumentLabel(options);
 
   /*
-   * ---------------------------------------------------------
-   * 3. LEFT SIDE INFORMATION
-   * ---------------------------------------------------------
+   * --------------------------------------------------------------
+   * COLORS
+   * --------------------------------------------------------------
    */
 
-  const leftX = 85;
+  const NAVY = "#03162F";
+  const WHITE = "#FFFFFF";
+  const ORANGE = "#F5A300";
 
   /*
-   * Level badge
+   * --------------------------------------------------------------
+   * 1. LEVEL
+   *
+   * Template currently has "O/L / A/L".
+   *
+   * We cover that area and draw ONLY the selected level.
+   * --------------------------------------------------------------
    */
 
-  drawRoundedBox(
+  /*
+   * Orange level box from the template.
+   *
+   * Approximate position:
+   * x = 45
+   * y = 225
+   * width = 122
+   * height = 120
+   */
+
+  coverArea(
     ctx,
-    leftX,
-    300,
-    155,
-    75,
-    18,
-    "#F5A300"
+    47,
+    226,
+    118,
+    117,
+    ORANGE
   );
 
-  drawTextWithShadow(
+  drawCenteredText(
     ctx,
     options.level,
-    leftX + 77,
-    351,
-    "900 40px Arial, Helvetica, sans-serif",
-    "#03162F",
-    "center"
+    106,
+    284,
+    105,
+    42,
+    NAVY,
+    900,
+    28
   );
 
   /*
-   * Year
+   * --------------------------------------------------------------
+   * 2. YEAR
+   *
+   * First large box
+   * --------------------------------------------------------------
    */
 
-  drawTextWithShadow(
+  /*
+   * First box:
+   * x ≈ 275
+   * y ≈ 225
+   * width ≈ 410
+   * height ≈ 120
+   */
+
+  drawCenteredText(
     ctx,
     options.year,
-    leftX + 205,
-    360,
-    "900 82px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
+    480,
+    285,
+    350,
+    68,
+    WHITE,
+    900,
+    36
   );
 
   /*
-   * Orange divider
+   * --------------------------------------------------------------
+   * 3. SUBJECT
+   *
+   * Second large box
+   * --------------------------------------------------------------
    */
-
-  ctx.save();
-
-  ctx.fillStyle = "#F5A300";
-
-  ctx.fillRect(
-    leftX,
-    405,
-    585,
-    5
-  );
-
-  ctx.restore();
 
   /*
-   * ---------------------------------------------------------
-   * 4. SUBJECT
-   * ---------------------------------------------------------
+   * Subject box:
+   * x ≈ 45
+   * y ≈ 370
+   * width ≈ 645
+   * height ≈ 110
+   *
+   * The icon is on the left, so text starts after it.
    */
 
-  const subjectSize = fitText(
+  drawLeftText(
     ctx,
     subject,
-    580,
-    62,
-    32
-  );
-
-  drawTextWithShadow(
-    ctx,
-    subject,
-    leftX,
-    485,
-    `900 ${subjectSize}px Arial, Helvetica, sans-serif`,
-    "#FFFFFF"
+    180,
+    425,
+    470,
+    48,
+    WHITE,
+    900,
+    28
   );
 
   /*
-   * ---------------------------------------------------------
-   * 5. MEDIUM BOX
-   * ---------------------------------------------------------
+   * --------------------------------------------------------------
+   * 4. MEDIUM
+   *
+   * Third box
+   * --------------------------------------------------------------
    */
-
-  drawRoundedBox(
-    ctx,
-    leftX,
-    525,
-    585,
-    72,
-    15,
-    "rgba(3, 22, 47, 0.92)",
-    "#FFFFFF"
-  );
 
   /*
-   * Graduation-cap style icon
+   * Medium box:
+   * x ≈ 143
+   * y ≈ 500
+   * width ≈ 545
+   * height ≈ 75
    */
 
-  ctx.save();
-
-  ctx.strokeStyle = "#F5A300";
-  ctx.lineWidth = 5;
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    leftX + 35,
-    560
-  );
-
-  ctx.lineTo(
-    leftX + 65,
-    545
-  );
-
-  ctx.lineTo(
-    leftX + 95,
-    560
-  );
-
-  ctx.lineTo(
-    leftX + 65,
-    575
-  );
-
-  ctx.closePath();
-
-  ctx.stroke();
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    leftX + 50,
-    570
-  );
-
-  ctx.lineTo(
-    leftX + 50,
-    585
-  );
-
-  ctx.quadraticCurveTo(
-    leftX + 65,
-    595,
-    leftX + 80,
-    585
-  );
-
-  ctx.lineTo(
-    leftX + 80,
-    570
-  );
-
-  ctx.stroke();
-
-  ctx.restore();
-
-  drawTextWithShadow(
+  drawLeftText(
     ctx,
     medium,
-    leftX + 125,
-    573,
-    "900 26px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
+    195,
+    538,
+    450,
+    28,
+    WHITE,
+    900,
+    18
   );
 
   /*
-   * ---------------------------------------------------------
-   * 6. DOCUMENT TYPE
-   * ---------------------------------------------------------
+   * --------------------------------------------------------------
+   * 5. WEBSITE / BRAND
+   *
+   * Fourth box
+   * --------------------------------------------------------------
    */
-
-  drawTextWithShadow(
-    ctx,
-    "▣",
-    leftX + 5,
-    665,
-    "900 48px Arial, Helvetica, sans-serif",
-    "#F5A300"
-  );
-
-  const documentSize = fitText(
-    ctx,
-    documentLabel,
-    500,
-    30,
-    20
-  );
-
-  drawTextWithShadow(
-    ctx,
-    documentLabel,
-    leftX + 75,
-    660,
-    `900 ${documentSize}px Arial, Helvetica, sans-serif`,
-    "#FFFFFF"
-  );
 
   /*
-   * ---------------------------------------------------------
-   * 7. FINAL BRANDING
-   * ---------------------------------------------------------
+   * This template has a globe icon for this row.
+   *
+   * Use it for the website.
    */
 
-  drawTextWithShadow(
+  drawLeftText(
     ctx,
     "pastpaperzone.lk",
-    85,
-    945,
-    "700 22px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
+    195,
+    665,
+    450,
+    30,
+    WHITE,
+    800,
+    18
   );
 
   /*
-   * ---------------------------------------------------------
-   * 8. FOOTER
-   * ---------------------------------------------------------
+   * --------------------------------------------------------------
+   * 6. DOCUMENT TYPE
+   *
+   * Fifth box
+   * --------------------------------------------------------------
    */
 
-  drawTextWithShadow(
+  drawLeftText(
     ctx,
-    "RELIABLE",
-    90,
-    980,
-    "900 20px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
+    documentLabel,
+    195,
+    800,
+    450,
+    28,
+    WHITE,
+    900,
+    17
   );
 
-  drawTextWithShadow(
-    ctx,
-    "FREE DOWNLOAD",
-    430,
-    980,
-    "900 20px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
-  );
-
-  drawTextWithShadow(
-    ctx,
-    "100% SAFE",
-    810,
-    980,
-    "900 20px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
-  );
-
-  drawTextWithShadow(
-    ctx,
-    "PAST PAPERS & MARKING SCHEMES",
-    1080,
-    980,
-    "900 18px Arial, Helvetica, sans-serif",
-    "#FFFFFF"
-  );
+  /*
+   * --------------------------------------------------------------
+   * RETURN
+   * --------------------------------------------------------------
+   */
 
   return canvas;
 }
+
+/*
+|--------------------------------------------------------------------------
+| Canvas -> PNG
+|--------------------------------------------------------------------------
+*/
 
 function canvasToPng(
   canvas: HTMLCanvasElement
@@ -496,6 +565,7 @@ function canvasToPng(
               "Could not create Telegram PNG."
             )
           );
+
           return;
         }
 
@@ -506,6 +576,12 @@ function canvasToPng(
     );
   });
 }
+
+/*
+|--------------------------------------------------------------------------
+| Public API
+|--------------------------------------------------------------------------
+*/
 
 export async function createTelegramGraphic(
   options: TelegramGraphicOptions
