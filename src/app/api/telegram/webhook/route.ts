@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getR2Bucket } from "@/lib/r2";
 import { trackTelegramLinkDelivery } from "@/lib/telegramAnalytics";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ALL_SUBJECTS,
   OL_SUBJECTS,
@@ -1325,6 +1326,185 @@ async function sendDirectDiscussionAnswer(
   return true;
 }
 
+type TelegramReaction = "like" | "love" | "dislike";
+
+type TelegramReactionCounts = Record<TelegramReaction, number>;
+
+function isTelegramReaction(
+  value: unknown
+): value is TelegramReaction {
+  return (
+    value === "like" ||
+    value === "love" ||
+    value === "dislike"
+  );
+}
+
+async function handleReactionCallback(
+  callbackQuery: any
+) {
+  const callbackId = callbackQuery.id;
+
+  const data =
+    typeof callbackQuery.data === "string"
+      ? callbackQuery.data
+      : "";
+
+  const message = callbackQuery.message;
+  const user = callbackQuery.from;
+
+  if (
+    !message?.chat?.id ||
+    !message?.message_id ||
+    !user?.id
+  ) {
+    await answerCallbackQuery(callbackId);
+    return;
+  }
+
+  const reactionValue = data.replace(
+    "ppz:react:",
+    ""
+  );
+
+  if (!isTelegramReaction(reactionValue)) {
+    await answerCallbackQuery(callbackId);
+    return;
+  }
+
+  const reaction: TelegramReaction = reactionValue;
+
+  const chatId = Number(message.chat.id);
+  const messageId = Number(message.message_id);
+  const userId = Number(user.id);
+
+  try {
+    const supabase = createAdminClient();
+
+    // Check whether this user already reacted
+    const { data: existing, error: existingError } =
+      await supabase
+        .from("telegram_post_reactions")
+        .select("reaction")
+        .eq("chat_id", chatId)
+        .eq("message_id", messageId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+    if (existingError) {
+      throw existingError;
+    }
+
+    if (existing?.reaction === reaction) {
+      // Clicking the same reaction again removes it
+      const { error } = await supabase
+        .from("telegram_post_reactions")
+        .delete()
+        .eq("chat_id", chatId)
+        .eq("message_id", messageId)
+        .eq("user_id", userId);
+
+      if (error) {
+        throw error;
+      }
+    } else {
+      // Change existing reaction or create new one
+      const { error } = await supabase
+        .from("telegram_post_reactions")
+        .upsert(
+          {
+            chat_id: chatId,
+            message_id: messageId,
+            user_id: userId,
+            reaction,
+          },
+          {
+            onConflict:
+              "chat_id,message_id,user_id",
+          }
+        );
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    // Get updated reaction counts
+    const { data: reactions, error: reactionsError } =
+      await supabase
+        .from("telegram_post_reactions")
+        .select("reaction")
+        .eq("chat_id", chatId)
+        .eq("message_id", messageId);
+
+    if (reactionsError) {
+      throw reactionsError;
+    }
+
+    const counts: TelegramReactionCounts = {
+      like: 0,
+      love: 0,
+      dislike: 0,
+    };
+
+    for (const item of reactions ?? []) {
+      if (isTelegramReaction(item.reaction)) {
+        counts[item.reaction] += 1;
+      }
+    }
+
+    // Keep all existing non-reaction buttons
+    const currentKeyboard =
+      message.reply_markup?.inline_keyboard ?? [];
+
+    const otherRows = currentKeyboard.filter(
+      (row: any[]) =>
+        !row.some(
+          (button: any) =>
+            typeof button?.callback_data === "string" &&
+            button.callback_data.startsWith(
+              "ppz:react:"
+            )
+        )
+    );
+
+    const replyMarkup = {
+      inline_keyboard: [
+        [
+          {
+            text: `👍 ${counts.like}`,
+            callback_data: "ppz:react:like",
+          },
+          {
+            text: `❤️ ${counts.love}`,
+            callback_data: "ppz:react:love",
+          },
+          {
+            text: `👎 ${counts.dislike}`,
+            callback_data: "ppz:react:dislike",
+          },
+        ],
+        ...otherRows,
+      ],
+    };
+
+    await telegram("editMessageReplyMarkup", {
+      chat_id: chatId,
+      message_id: messageId,
+      reply_markup: replyMarkup,
+    });
+
+    await answerCallbackQuery(callbackId);
+  } catch (error) {
+    console.error(
+      "Telegram reaction error:",
+      error
+    );
+
+    await answerCallbackQuery(callbackId);
+  }
+}
+
 /*
 |--------------------------------------------------------------------------
 | Handle callback buttons
@@ -1341,6 +1521,12 @@ async function handleCallbackQuery(
     typeof callbackQuery.data === "string"
       ? callbackQuery.data
       : "";
+
+  // Telegram post reactions
+  if (data.startsWith("ppz:react:")) {
+    await handleReactionCallback(callbackQuery);
+    return;
+  }
 
   const message =
     callbackQuery.message;

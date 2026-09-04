@@ -2,7 +2,7 @@ import "./globals.css";
 import { ReactNode } from "react";
 import { Baloo_2, Nunito } from "next/font/google";
 import type { Metadata } from "next";
-import Script from "next/script";
+import PWARegister from "@/components/PWARegister";
 
 const baloo2 = Baloo_2({
   subsets: ["latin"],
@@ -33,6 +33,30 @@ export const metadata: Metadata = {
     "Download free G.C.E. O/L and A/L past papers, marking schemes and exam resources in Sinhala, English and Tamil mediums in Sri Lanka.",
 
   applicationName: "Past Paper Zone",
+
+  manifest: "/manifest.webmanifest",
+
+  icons: {
+    icon: [
+      {
+        url: "/icons/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/icons/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: "/icons/icon-192.png",
+  },
+
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Past Paper Zone",
+  },
 
   keywords: [
     "Past Paper Zone",
@@ -114,6 +138,7 @@ export default function RootLayout({
         className={`${baloo2.variable} ${nunito.variable}`}
         suppressHydrationWarning
       >
+        <PWARegister />
         {children}
       </body>
     </html>

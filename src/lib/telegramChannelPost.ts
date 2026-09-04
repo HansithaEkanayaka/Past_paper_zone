@@ -167,6 +167,20 @@ export async function notifyChannelNewPaper(params: {
     inline_keyboard: [
       [
         {
+          text: "👍 0",
+          callback_data: "ppz:react:like",
+        },
+        {
+          text: "❤️ 0",
+          callback_data: "ppz:react:love",
+        },
+        {
+          text: "👎 0",
+          callback_data: "ppz:react:dislike",
+        },
+      ],
+      [
+        {
           text: "📥 Download Now",
           url: paperPageUrl,
         },
