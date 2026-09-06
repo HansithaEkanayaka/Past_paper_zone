@@ -25,6 +25,8 @@ export default function SubjectDetailPage() {
   const tSubjects = useTranslations("SubjectCard");
 
   const availableYears = [
+    "2026",
+    "2025",
     "2024",
     "2023",
     "2022",
