@@ -7,8 +7,10 @@ const baseUrl = "https://pastpaperzone.lk";
 const locales = ["en", "si", "ta"] as const;
 
 function parsePaperKey(key: string) {
+  // Real R2 key format: papers/{subjectId}/{year}/{medium}/{docType}[-partN].pdf
+  // e.g. papers/ol-maths/2023/sinhala/paper.pdf
   const match = key.match(
-    /^papers\/(ol|al)-([^/]+)\/([^/]+)\/([^/]+)\.pdf$/i
+    /^papers\/((ol|al)-[^/]+)\/(20\d{2})\/(sinhala|english|tamil)\/[^/]+\.pdf$/i
   );
 
   if (!match) {
@@ -16,10 +18,10 @@ function parsePaperKey(key: string) {
   }
 
   return {
-    subjectId: `${match[1]}-${match[2]}`,
-    level: match[1],
+    subjectId: match[1],
+    level: match[2].toLowerCase(),
     year: match[3],
-    medium: match[4],
+    medium: match[4].toLowerCase(),
   };
 }
 

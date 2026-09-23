@@ -81,10 +81,6 @@ export const metadata: Metadata = {
   creator: "Past Paper Zone",
   publisher: "Past Paper Zone",
 
-  alternates: {
-    canonical: siteUrl,
-  },
-
   robots: {
     index: true,
     follow: true,
