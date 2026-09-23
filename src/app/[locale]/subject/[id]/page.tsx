@@ -756,9 +756,7 @@ export default function SubjectDetailPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (requireLogin())
-                          return;
-
+                        // Preview is public - only download needs login.
                         setPreviewFailed(false);
 
                         setShowPreview(

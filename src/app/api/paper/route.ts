@@ -21,9 +21,11 @@ export async function GET(request: Request) {
 
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  // Viewing (preview) is public so search engines and visitors can see the
+  // paper; only downloading requires a logged-in account.
+  if (action === "download" && (authError || !user)) {
     return NextResponse.json(
-      { error: "login_required", message: "Please log in to view or download this paper." },
+      { error: "login_required", message: "Please log in to download this paper." },
       { status: 401, headers: { "Cache-Control": "no-store" } }
     );
   }
@@ -59,7 +61,7 @@ export async function GET(request: Request) {
         year,
         medium,
         doc_type: type,
-        user_id: user.id,
+        user_id: user?.id ?? null,
         visitor_id: request.headers.get("x-visitor-id") || null,
       });
     } catch (activityError) {

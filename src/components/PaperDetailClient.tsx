@@ -180,7 +180,7 @@ export default function PaperDetailClient({ subjectId, subjectName, level, year,
   };
 
   const openPaper = () => {
-    if (requireLogin()) return;
+    // Preview is public - only download needs login.
     setPreview(true);
   };
 

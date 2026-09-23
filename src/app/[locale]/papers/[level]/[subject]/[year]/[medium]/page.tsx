@@ -133,6 +133,51 @@ export default async function PaperPage({
           medium={data.medium as "sinhala" | "english" | "tamil"}
         />
 
+        {/* Server-rendered text so crawlers see real content, not just a client-side widget */}
+        <section className="mt-12 rounded-2xl border border-gray-200 bg-white p-6 text-sm leading-7 text-gray-700 dark:border-gray-700 dark:bg-[#1e2130] dark:text-gray-300">
+          <h2 className="mb-3 text-xl font-bold text-[#1A365D] dark:text-white">
+            About the {data.year} {data.subjectName} paper ({mediumName})
+          </h2>
+          <p className="mb-3">
+            This page brings together the {data.year} G.C.E. {data.level === "ol" ? "Ordinary Level" : "Advanced Level"}{" "}
+            {data.subjectName} examination paper in {mediumName}, together with its marking scheme where available.
+            Use the tabs above to switch between the question paper and the marking scheme, preview the PDF in your
+            browser, or save it to your profile for later.
+          </p>
+          <p className="mb-3">
+            A good way to use a past paper: attempt it under timed exam conditions first, then check your answers
+            against the marking scheme and note which topics cost you marks. Repeating this across several years
+            shows which topics and question styles the Department of Examinations asks most often.
+          </p>
+          <h3 className="mt-5 mb-2 font-bold text-[#1A365D] dark:text-white">More {data.subjectName} papers</h3>
+          <ul className="flex flex-wrap gap-2">
+            {(["sinhala", "english", "tamil"] as const)
+              .filter((m) => m !== data.medium)
+              .map((m) => (
+                <li key={m}>
+                  <a
+                    className="inline-block rounded-full border border-gray-200 px-3 py-1 hover:border-[#DD6B20] hover:text-[#DD6B20] dark:border-gray-600"
+                    href={`/${data.locale}/papers/${data.level}/${data.subject}/${data.year}/${m}`}
+                  >
+                    {data.year} {m.charAt(0).toUpperCase() + m.slice(1)} medium
+                  </a>
+                </li>
+              ))}
+            {[Number(data.year) - 1, Number(data.year) + 1]
+              .filter((y) => y >= 2015 && y <= 2026)
+              .map((y) => (
+                <li key={y}>
+                  <a
+                    className="inline-block rounded-full border border-gray-200 px-3 py-1 hover:border-[#DD6B20] hover:text-[#DD6B20] dark:border-gray-600"
+                    href={`/${data.locale}/papers/${data.level}/${data.subject}/${y}/${data.medium}`}
+                  >
+                    {y} {mediumName}
+                  </a>
+                </li>
+              ))}
+          </ul>
+        </section>
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
