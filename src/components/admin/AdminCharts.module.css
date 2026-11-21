@@ -1,0 +1,55 @@
+/* Chart styles. Colours come from the CSS variables defined on the admin
+   dashboard root (.admin in page.module.css), so charts follow light/dark. */
+
+.chartWrap { position: relative; width: 100%; }
+.svg { display: block; width: 100%; overflow: visible; touch-action: pan-y; }
+.gridLine { stroke: var(--admin-grid); stroke-width: 1; }
+.axisText { fill: var(--admin-muted); font-size: 11px; font-weight: 600; }
+.cursorLine { stroke: var(--admin-muted); stroke-width: 1; stroke-dasharray: 4 4; opacity: .6; }
+
+.tooltip {
+  position: absolute; top: 0; z-index: 5; pointer-events: none; min-width: 150px;
+  padding: 10px 12px; border-radius: 12px; font-size: 12px;
+  background: var(--admin-tooltip-bg); color: var(--admin-tooltip-text);
+  box-shadow: 0 12px 30px rgba(8, 15, 30, .28);
+}
+.tooltipTitle { font-weight: 800; margin-bottom: 6px; opacity: .85; }
+.tooltipRow { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+.tooltipRow b { margin-left: auto; padding-left: 14px; font-variant-numeric: tabular-nums; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; }
+.legendItem { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--admin-muted); }
+
+.empty {
+  position: absolute; inset: 0; display: grid; place-items: center; text-align: center;
+  color: var(--admin-muted); font-size: 13px; font-weight: 600; pointer-events: none;
+}
+
+/* Hour-of-day bars */
+.hours { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 4px; align-items: end; height: 150px; }
+.hourCol { position: relative; height: 100%; display: flex; align-items: flex-end; }
+.hourBar {
+  width: 100%; min-height: 3px; border-radius: 6px 6px 3px 3px;
+  background: var(--admin-accent-soft-strong); transition: height .35s ease, background .15s ease;
+}
+.hourCol:hover .hourBar, .hourPeak { background: var(--admin-accent); }
+.hourLabels { display: grid; grid-template-columns: repeat(24, minmax(0, 1fr)); gap: 4px; margin-top: 8px; }
+.hourLabels span { font-size: 10px; text-align: center; color: var(--admin-muted); font-weight: 600; }
+.hourLabels span:not(:nth-child(4n + 1)) { visibility: hidden; }
+.hourTip {
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 800; white-space: nowrap;
+  background: var(--admin-tooltip-bg); color: var(--admin-tooltip-text); opacity: 0; pointer-events: none; transition: opacity .12s;
+}
+.hourCol:hover .hourTip { opacity: 1; }
+
+/* Donut */
+.donutWrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+.donutSvg { width: 150px; height: 150px; flex: 0 0 150px; }
+.donutTotal { fill: var(--admin-text); font-size: 22px; font-weight: 900; }
+.donutSub { fill: var(--admin-muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.donutLegend { display: grid; gap: 10px; flex: 1; min-width: 130px; }
+.donutRow { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; color: var(--admin-text); }
+.donutRow b { margin-left: auto; font-variant-numeric: tabular-nums; }
+.donutRow small { color: var(--admin-muted); font-weight: 700; }
